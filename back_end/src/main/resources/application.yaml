@@ -1,0 +1,38 @@
+server:
+  port: 9898
+
+app:
+  storage:
+    root: public
+    upload:
+      user: upload/user
+      hotel: upload/hotel
+    download:
+      user: user
+
+spring:
+  web:
+    resources:
+      static-locations: file:${app.storage.root}/
+  datasource:
+    url: jdbc:mysql://103.161.172.90:3308/hotel_manager
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        integrator_provider: com.hotel.webapp.config.CustomSchemaIntegrator
+    show-sql: true
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+jwt:
+  signerKey: "1miFxX59tPM31zfyscZTV1ovDPI+2RI6f7nxOPe0/9Cnblzms/A3CY9Jid7QyEa0"
