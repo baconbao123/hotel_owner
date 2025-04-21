@@ -1,11 +1,11 @@
 package com.hotel.webapp.config;
 
-import com.hotel.webapp.entity.Role;
-import com.hotel.webapp.entity.User;
-import com.hotel.webapp.entity.MapUserRoles;
-import com.hotel.webapp.repository.RoleRepository;
-import com.hotel.webapp.repository.UserRepository;
-import com.hotel.webapp.repository.MapUserRoleRepository;
+import com.hotel.webapp.entity.HotelRoles;
+import com.hotel.webapp.entity.HotelUser;
+import com.hotel.webapp.entity.HotelMapUserRoles;
+import com.hotel.webapp.repository.HotelRoleRepository;
+import com.hotel.webapp.repository.HotelUserRepository;
+import com.hotel.webapp.repository.HotelMapUserRoleRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,34 +23,34 @@ public class ApplicationInitConfig {
   PasswordEncoder passwordEncoder;
 
   @Bean
-  ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository,
-        MapUserRoleRepository mapUserRoleRepository) {
+  ApplicationRunner applicationRunner(HotelUserRepository hotelUserRepository, HotelRoleRepository hotelRoleRepository,
+        HotelMapUserRoleRepository hotelMapUserRoleRepository) {
     return args -> {
-      User user = userRepository.findByEmail("sa@gmail.com")
-                                .orElseGet(() -> {
-                                  User newUser = User.builder()
-                                                     .email("sa@gmail.com")
-                                                     .password(passwordEncoder.encode("123"))
-                                                     .createdAt(new Timestamp(System.currentTimeMillis()))
-                                                     .build();
-                                  return userRepository.save(newUser);
+      HotelUser hotelUser = hotelUserRepository.findByEmail("sa@gmail.com")
+                                               .orElseGet(() -> {
+                                  HotelUser newHotelUser = HotelUser.builder()
+                                                                    .email("sa@gmail.com")
+                                                                    .password(passwordEncoder.encode("123"))
+                                                                    .createdAt(new Timestamp(System.currentTimeMillis()))
+                                                                    .build();
+                                  return hotelUserRepository.save(newHotelUser);
                                 });
 
-      Role role = roleRepository.findByName("Admin")
-                                .orElseGet(() -> {
-                                  Role newRole = Role.builder().name("Admin")
-                                                     .isActive(true)
-                                                     .createdAt(new Timestamp(System.currentTimeMillis()))
-                                                     .build();
-                                  return roleRepository.save(newRole);
+      HotelRoles hotelRoles = hotelRoleRepository.findByName("Admin")
+                                                 .orElseGet(() -> {
+                                  HotelRoles newHotelRoles = HotelRoles.builder().name("Admin")
+                                                                       .isActive(true)
+                                                                       .createdAt(new Timestamp(System.currentTimeMillis()))
+                                                                       .build();
+                                  return hotelRoleRepository.save(newHotelRoles);
                                 });
 
-      if (mapUserRoleRepository.findByRoleIdAndUserId(role.getId(), user.getId()).isEmpty()) {
-        MapUserRoles userRole = MapUserRoles.builder()
-                                            .roleId(role.getId())
-                                            .userId(user.getId())
-                                            .build();
-        mapUserRoleRepository.save(userRole);
+      if (hotelMapUserRoleRepository.findByRoleIdAndUserId(hotelRoles.getId(), hotelUser.getId()).isEmpty()) {
+        HotelMapUserRoles userRole = HotelMapUserRoles.builder()
+                                                      .roleId(hotelRoles.getId())
+                                                      .userId(hotelUser.getId())
+                                                      .build();
+        hotelMapUserRoleRepository.save(userRole);
       }
     };
   }

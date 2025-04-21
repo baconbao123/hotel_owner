@@ -46,12 +46,11 @@ public enum ErrorCode {
   ROLE_NOTFOUND(404, "Role Not Found", HttpStatus.NOT_FOUND),
   RESOURCE_NOTFOUND(404, "Resource Not Found", HttpStatus.NOT_FOUND),
   PERMISSION_NOTFOUND(404, "Permission Not Found", HttpStatus.NOT_FOUND),
-
+  HOTEL_NOTFOUND(404, "Hotel Not Found", HttpStatus.NOT_FOUND),
 
   // Mapping Not found - 404
   MAPPING_UR_NOTFOUND(404, "Mapping User Role Not Found", HttpStatus.NOT_FOUND),
-  MAPPING_RA_NOTFOUND(404, "Mapping Resource Action Not Found", HttpStatus.NOT_FOUND)
-  ;
+  MAPPING_RA_NOTFOUND(404, "Mapping Resource Action Not Found", HttpStatus.NOT_FOUND);
 
   int code;
   String message;

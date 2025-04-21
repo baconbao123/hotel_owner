@@ -1,5 +1,6 @@
 package com.hotel.webapp.dto.admin.request;
 
+import com.hotel.webapp.validation.FieldNotEmpty;
 import com.hotel.webapp.validation.Trim;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Email;
@@ -22,6 +23,8 @@ public class UserDTO {
   @Pattern(regexp = "^\\d{10}$")
   @Trim
   String phoneNumber;
+  @FieldNotEmpty(field = "hotel id")
+  Integer hotelId;
   String password;
   @Nullable
   MultipartFile avatarUrl;

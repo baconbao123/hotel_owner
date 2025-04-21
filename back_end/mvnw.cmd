@@ -14,7 +14,7 @@
 @REM software distributed under the License is distributed on an
 @REM "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 @REM KIND, either express or implied.  See the License for the
-@REM specific language governing permissions and limitations
+@REM specific language governing hotelPermissions and limitations
 @REM under the License.
 @REM ----------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@
 @REM
 @REM Optional ENV vars
 @REM   MVNW_REPOURL - repo url base for downloading maven distribution
-@REM   MVNW_USERNAME/MVNW_PASSWORD - user and password for downloading maven
+@REM   MVNW_USERNAME/MVNW_PASSWORD - hotelUser and password for downloading maven
 @REM   MVNW_VERBOSE - true: enable verbose log; others: silence the output
 @REM ----------------------------------------------------------------------------
 

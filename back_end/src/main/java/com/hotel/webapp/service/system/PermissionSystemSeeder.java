@@ -17,11 +17,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PermissionSystemSeeder {
-  ResourcesRepository resourcesRepository;
-  PermissionsRepository permissionsRepository;
-  ActionRepository actionRepository;
-  MapResourceActionRepository mapResourceActionRepository;
-  MapUserRoleRepository mapUserRoleRepository;
+  HotelResourcesRepository hotelResourcesRepository;
+  HotelPermissionsRepository hotelPermissionsRepository;
+  HotelActionRepository hotelActionRepository;
+  HotelMapResourceActionRepository hotelMapResourceActionRepository;
+  HotelMapUserRoleRepository hotelMapUserRoleRepository;
 
   List<String> DEFAULT_RESOURCE = List.of("Hotel", "User", "Booking", "Permissions", "Resources", "Actions");
 
@@ -46,11 +46,11 @@ public class PermissionSystemSeeder {
     Timestamp now = new Timestamp(System.currentTimeMillis());
 
     for (String resourceName : DEFAULT_RESOURCE) {
-      int resourceId = resourcesRepository.findIdByName(resourceName)
-                                          .orElseGet(() -> {
-                                            resourcesRepository.insertResources(resourceName, now, 0);
-                                            return resourcesRepository.findIdByName(resourceName)
-                                                                      .orElseThrow(() -> new RuntimeException(
+      int resourceId = hotelResourcesRepository.findIdByName(resourceName)
+                                               .orElseGet(() -> {
+                                            hotelResourcesRepository.insertResources(resourceName, now, 0);
+                                            return hotelResourcesRepository.findIdByName(resourceName)
+                                                                           .orElseThrow(() -> new RuntimeException(
                                                                             "Failed to insert resource "
                                                                                   + resourceName));
                                           });
@@ -66,11 +66,11 @@ public class PermissionSystemSeeder {
     Timestamp now = new Timestamp(System.currentTimeMillis());
 
     for (String actionName : DEFAULT_ACTION) {
-      int actionId = actionRepository.findIdByName(actionName)
-                                     .orElseGet(() -> {
-                                       actionRepository.insetActions(actionName, now, 0);
-                                       return actionRepository.findIdByName(actionName)
-                                                              .orElseThrow(() -> new RuntimeException(
+      int actionId = hotelActionRepository.findIdByName(actionName)
+                                          .orElseGet(() -> {
+                                       hotelActionRepository.insetActions(actionName, now, 0);
+                                       return hotelActionRepository.findIdByName(actionName)
+                                                                   .orElseThrow(() -> new RuntimeException(
                                                                     "Failed to insert action " + actionName));
                                      });
       actionIds.put(actionName, actionId);
@@ -91,11 +91,11 @@ public class PermissionSystemSeeder {
       for (String actionName : DEFAULT_ACTION) {
         int actionId = actionIds.get(actionName);
 
-        int mappingId = mapResourceActionRepository.findIdByResourceIdAndActionId(resourceId, actionId)
-                                                   .orElseGet(() -> {
-                                                     mapResourceActionRepository.insertMapping(resourceId, actionId,
+        int mappingId = hotelMapResourceActionRepository.findIdByResourceIdAndActionId(resourceId, actionId)
+                                                        .orElseGet(() -> {
+                                                     hotelMapResourceActionRepository.insertMapping(resourceId, actionId,
                                                            now, 0);
-                                                     return mapResourceActionRepository
+                                                     return hotelMapResourceActionRepository
                                                            .findIdByResourceIdAndActionId(resourceId, actionId)
                                                            .orElseThrow(() -> new RuntimeException(
                                                                  "Failed create mapping for resource " + resourceName + " and action " + actionName
@@ -111,14 +111,14 @@ public class PermissionSystemSeeder {
   //  seederAdminPermission
   private void seederAdminPermission(int adminId, int roleId,
         Map<Pair<Integer, Integer>, Integer> resourceActionMappings) {
-    int mapUserRoleId = mapUserRoleRepository.findIdByRoleIdAndUserId(roleId, adminId);
+    int mapUserRoleId = hotelMapUserRoleRepository.findIdByRoleIdAndUserId(roleId, adminId);
 
     Timestamp now = new Timestamp(System.currentTimeMillis());
 
     for (int resourceActionId : resourceActionMappings.values()) {
-      if (permissionsRepository.countPermissionsByMapResourcesActionIdAndMapUserRolesId(roleId,
+      if (hotelPermissionsRepository.countPermissionsByMapResourcesActionIdAndMapUserRolesId(roleId,
             resourceActionId) == 0) {
-        permissionsRepository.insertPermissions(resourceActionId, mapUserRoleId, now, 0);
+        hotelPermissionsRepository.insertPermissions(resourceActionId, mapUserRoleId, now, 0);
       }
     }
   }
