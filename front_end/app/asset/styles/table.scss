@@ -1,0 +1,40 @@
+.btn_add_new, .btn_submit {
+  color: white !important;
+}
+
+.icon_edit {
+  color: #22c55e !important;
+  width: 30px !important;
+}
+
+.icon_view {
+  color: #0ea5e9 !important;
+  width: 30px !important;
+}
+
+.icon_trash {
+  color: #ef4444 !important;
+  width: 30px !important;
+}
+
+.p-tag {
+  &.p-tag-success {
+    background-color: #def7ec;
+    color: #03543f;
+    font-weight: 600;
+  }
+
+  &.p-tag-danger {
+    background-color: #fde2e2;
+    color: #9b1c1c;
+    font-weight: 600;
+  }
+}
+
+.p-dialog-mask {
+  z-index: 0 !important;
+}
+
+.p-datatable-thead {
+  z-index: 0 !important;
+}

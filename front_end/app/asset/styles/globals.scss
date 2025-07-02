@@ -1,0 +1,13 @@
+@use "./calendar.scss" as *;
+
+@use "./table.scss" as *;
+
+.p-breadcrumb {
+  height: 42px;
+  flex-wrap: wrap;
+}
+
+.p-menuitem {
+  display: flex;
+  align-items: center;
+}
