@@ -95,10 +95,9 @@ $axios.interceptors.response.use(
             }
           }
           break;
-        // case 403:
-        //   console.log("403 received, redirecting to /403");
-        //   window.location.href = "/403";
-        //   break;
+        case 403:
+          window.location.href = "/403";
+          break;
         // case 404:
         //   if (!error.response.data && window.location.pathname !== "/404") {
         //     window.location.href = "/404";

@@ -22,4 +22,16 @@ public class StorageProperties {
   public String getUserUploadPath() {
     return root + "/" + upload.get("user");
   }
+
+  public String getFacilityIconPath() {
+    return root + "/" + upload.get("icon");
+  }
+
+  public String getHotelPath() {
+    return root + "/" + upload.get("hotel");
+  }
+
+  public String getDocumentPath() {
+    return root + "/" + upload.get("document");
+  }
 }

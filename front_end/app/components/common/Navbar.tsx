@@ -6,73 +6,79 @@ import {
   ArrowRightEndOnRectangleIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import { Dialog } from 'primereact/dialog';
+import { Dialog } from "primereact/dialog";
 import { Link, useSearchParams } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "~/store";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router";
-import { Button } from 'primereact/button';
+import { Button } from "primereact/button";
 import $axios from "~/axios";
-import { setUser, type UserLogin } from "~/store/slince/userDataSlice";
-import { disableLoading, setLoading } from "~/store/slince/commonSlince";
-import { setPermissions } from "~/store/slince/permissionSlice";
-import { Sidebar } from 'primereact/sidebar';
-import ImageUploader from "~/utils/ImageUploader";
+import { setUser, type UserLogin } from "~/store/slice/userDataSlice";
+import { disableLoading, setLoading } from "~/store/slice/commonSlice";
+import { setPermissions } from "~/store/slice/permissionSlice";
+import { Sidebar } from "primereact/sidebar";
 import { toast } from "react-toastify";
 import { InputText } from "primereact/inputtext";
+import ImageUploader from "../../utils/ImageUploader";
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.userDataSlice);
-  const [showProfile, setShowProfile] = useState(false)
-  const [showFormEdit, setShowFormEdit] = useState(false)
-  const [showFormPassword, setShowFormPassword] = useState(false)
+  const [showProfile, setShowProfile] = useState(false);
+  const [showFormEdit, setShowFormEdit] = useState(false);
+  const [showFormPassword, setShowFormPassword] = useState(false);
 
   useEffect(() => {
-    fetchUserInfo()
-  }, [])
+    fetchUserInfo();
+  }, []);
 
   const fetchUserInfo = () => {
-    dispatch(setLoading())
-    $axios.get("/user/profile").then((res: any) => {
-       const result = res.data.result;
+    dispatch(setLoading());
+    $axios
+      .get("/user/profile")
+      .then((res: any) => {
+        const result = res.data.result;
 
-      const userDataLoad: UserLogin = {
-        id: result.id || 0,
-        fullname: result.fullName || "",
-        email: result.email || "",
-        phoneNumber: result.phoneNumber || "",
-        avatarUrl: result.avatarUrl || "",
-        roles: result.roles || [],
-        loading: false,
-      };
-      dispatch(setUser(userDataLoad));
-      // fetchPermission()
-    }).catch ((err: any) => {
-      console.log("Init user error ", err);
-    }).finally(() => {
-      dispatch(disableLoading())
-    })
-  }
+        const userDataLoad: UserLogin = {
+          id: result.id || 0,
+          fullname: result.fullName || "",
+          email: result.email || "",
+          phoneNumber: result.phoneNumber || "",
+          avatarUrl: result.avatarUrl || "",
+          roles: result.roles || [],
+          loading: false,
+        };
+        dispatch(setUser(userDataLoad));
+        // fetchPermission()
+      })
+      .catch((err: any) => {
+        console.log("Init user error ", err);
+      })
+      .finally(() => {
+        dispatch(disableLoading());
+      });
+  };
 
   const fetchPermission = () => {
-    dispatch(setLoading())
-    $axios.get("/permission/resources").then( (res: any) => {
-      if (res.data?.result) {
-        dispatch(setPermissions(res.data.result))
-      }
-    }).catch((err: any) => {
-      console.log("Init permission error ", err);
-    })
-    .finally(() => {
-      dispatch(disableLoading())
-    })
-  }
-
+    dispatch(setLoading());
+    $axios
+      .get("/permission/resources")
+      .then((res: any) => {
+        if (res.data?.result) {
+          dispatch(setPermissions(res.data.result));
+        }
+      })
+      .catch((err: any) => {
+        console.log("Init permission error ", err);
+      })
+      .finally(() => {
+        dispatch(disableLoading());
+      });
+  };
 
   const handleLogoutClick = () => {
     setIsProfileOpen(false);
@@ -88,40 +94,40 @@ export default function Navbar() {
 
   const ConfirmForm = () => {
     return (
-        <Dialog
-          visible={showLogoutConfirm}
-          onHide={() => setShowLogoutConfirm(false)}
-          modal
-          className="p-fluid w-100"
-          header={'Are you sure ?'}
-          breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-          footer={() => (
-              <div className="flex justify-center  gap-2">
-              <Button
-                label={'Cancle'}
-                icon='pi pi-times'
-                onClick={() => setShowLogoutConfirm(false)}
-                severity="secondary" outlined
-              />
-              <Button
-                  label={'Logout'}
-                  icon='pi pi-check'
-                  onClick={confirmLogout}
-                  severity="danger"
-                  autoFocus
-                />
-            </div>
-          )}
-        >
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-gray-500 m-0">
-              You will be redirected to the login page.
-            </p>
+      <Dialog
+        visible={showLogoutConfirm}
+        onHide={() => setShowLogoutConfirm(false)}
+        modal
+        className="p-fluid w-100"
+        header={"Are you sure ?"}
+        breakpoints={{ "960px": "75vw", "641px": "90vw" }}
+        footer={() => (
+          <div className="flex justify-center  gap-2">
+            <Button
+              label={"Cancle"}
+              icon="pi pi-times"
+              onClick={() => setShowLogoutConfirm(false)}
+              severity="secondary"
+              outlined
+            />
+            <Button
+              label={"Logout"}
+              icon="pi pi-check"
+              onClick={confirmLogout}
+              severity="danger"
+              autoFocus
+            />
           </div>
-
-        </Dialog>
-    )
-  }
+        )}
+      >
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-gray-500 m-0">
+            You will be redirected to the login page.
+          </p>
+        </div>
+      </Dialog>
+    );
+  };
 
   const FormEditProfile = () => {
     const [formData, setFormData] = useState({
@@ -129,11 +135,15 @@ export default function Navbar() {
       email: user.email,
       phoneNumber: user.phoneNumber,
       avatarUrl: user.avatarUrl,
-    })
+    });
     const [error, setError] = useState<Object | null>(null);
 
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const getError = (field: string) => (error &&typeof error === "object" && (error as Record<string, string>)[field]) ||null;
+    const getError = (field: string) =>
+      (error &&
+        typeof error === "object" &&
+        (error as Record<string, string>)[field]) ||
+      null;
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setFormData((prev) => ({
         ...prev,
@@ -142,8 +152,8 @@ export default function Navbar() {
     };
 
     const submit = () => {
-      setError({})
-      dispatch(setLoading())
+      setError({});
+      dispatch(setLoading());
       const formDataToSend = new FormData();
       formDataToSend.append("fullName", formData.name);
       formDataToSend.append("email", formData.email);
@@ -154,125 +164,122 @@ export default function Navbar() {
         formDataToSend.append("keepAvatar", "false");
         // formDataToSend.append("keepAvatar", "true");
       }
-      $axios.put(
-          `/user/profile?id=${user.id}`,
-          formDataToSend,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-      )
-      .then ((res: any) => {
-        toast.success("Update successfully")
-        window.location.reload();
+      $axios
+        .put(`/user/profile?id=${user.id}`, formDataToSend, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((res: any) => {
+          toast.success("Update successfully");
+          window.location.reload();
         })
 
-      .catch((err: any) => {
-        setError(err.response?.data?.errorMessages || "Failed to update profile");
-        toast.error("Update failed")
-        console.log(err);
-        
-      })
-      .finally(() => {
-        dispatch(disableLoading())
-      })
-
-    }
+        .catch((err: any) => {
+          setError(
+            err.response?.data?.errorMessages || "Failed to update profile"
+          );
+          toast.error("Update failed");
+          console.log(err);
+        })
+        .finally(() => {
+          dispatch(disableLoading());
+        });
+    };
     return (
-        <Dialog
-          visible={showFormEdit}
-          onHide={() => setShowFormEdit(false)}
-          modal
-          className="p-fluid"
-          header={'Edit profile'}
-          breakpoints={{ '3000px': '40vw','960px': '75vw', '641px': '90vw' }}
-          footer={() => (
-              <div className="flex justify-center  gap-2 mt-10">
-              <Button
-                label={'Close'}
-                icon='pi pi-times'
-                onClick={() => setShowFormEdit(false)}
-                severity="secondary" outlined
-              />
-              <Button
-                  label={'Save'}
-                  icon='pi pi-check'
-                  onClick={submit}
-                  autoFocus
-                />
-            </div>
-          )}
-        >
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-center">
-              <ImageUploader
-                initialImageUrl={
-                  formData.avatarUrl
-                    ? `${
-                        import.meta.env.VITE_REACT_APP_BACK_END_LINK_UPLOAD_USER
-                      }/${formData.avatarUrl}`
-                    : undefined
-                }
-                onFileChange={(file) => setSelectedFile(file)}
-                maxFileSize={100}
-              />
-            </div>
-
-            <div className="mt-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-              />
-              {getError("name") && (
-                <small className="text-red-500 text-xs">{getError("name")}</small>
-              )}
-            </div>
-
-            <div  className="mt-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <input
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-              />
-              {getError("email") && (
-                <small className="text-red-500 text-xs">
-                  {getError("email")}
-                </small>
-              )}
-            </div>
-
-            <div  className="mt-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Phone Number
-              </label>
-              <input
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-              />
-              {getError("phoneNumber") && (
-                <small className="text-red-500 text-xs">
-                  {getError("phoneNumber")}
-                </small>
-              )}
-            </div>
+      <Dialog
+        visible={showFormEdit}
+        onHide={() => setShowFormEdit(false)}
+        modal
+        className="p-fluid"
+        header={"Edit profile"}
+        breakpoints={{ "3000px": "40vw", "960px": "75vw", "641px": "90vw" }}
+        footer={() => (
+          <div className="flex justify-center  gap-2 mt-10">
+            <Button
+              label={"Close"}
+              icon="pi pi-times"
+              onClick={() => setShowFormEdit(false)}
+              severity="secondary"
+              outlined
+            />
+            <Button
+              label={"Save"}
+              icon="pi pi-check"
+              onClick={submit}
+              autoFocus
+            />
+          </div>
+        )}
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-center">
+            <ImageUploader
+              initialImageUrl={
+                formData.avatarUrl
+                  ? `${
+                      import.meta.env.VITE_REACT_APP_BACK_END_LINK_UPLOAD_USER
+                    }/${formData.avatarUrl}`
+                  : undefined
+              }
+              onFileChange={(file) => setSelectedFile(file)}
+              maxFileSize={100}
+            />
           </div>
 
-        </Dialog>
-    )
-  }
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2"
+            />
+            {getError("name") && (
+              <small className="text-red-500 text-xs">{getError("name")}</small>
+            )}
+          </div>
+
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2"
+            />
+            {getError("email") && (
+              <small className="text-red-500 text-xs">
+                {getError("email")}
+              </small>
+            )}
+          </div>
+
+          <div className="mt-5">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number
+            </label>
+            <input
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2"
+            />
+            {getError("phoneNumber") && (
+              <small className="text-red-500 text-xs">
+                {getError("phoneNumber")}
+              </small>
+            )}
+          </div>
+        </div>
+      </Dialog>
+    );
+  };
 
   const FormResetPassword = () => {
     const [formData, setFormData] = useState({
@@ -280,7 +287,7 @@ export default function Navbar() {
       email: user.email,
       phoneNumber: user.phoneNumber,
       avatarUrl: user.avatarUrl,
-    })
+    });
     const [error, setError] = useState("");
 
     const [newPassword, setNewPassword] = useState("");
@@ -306,136 +313,138 @@ export default function Navbar() {
         setError("Invalid or missing token.");
         return;
       }
-      setError({})
-      dispatch(setLoading())
- 
-     $axios.post(
-        `/auth/reset-password-profile?token=${token}&newPassword=${newPassword}`
-      )
-      .then ((res: any) => {
-        toast.success("Update successfully")
-        window.location.reload();
+      // setError({});
+      dispatch(setLoading());
+
+      $axios
+        .post(
+          `/auth/reset-password-profile?token=${token}&newPassword=${newPassword}`
+        )
+        .then((res: any) => {
+          toast.success("Update successfully");
+          window.location.reload();
         })
 
-      .catch((err: any) => {
-        setError(err.response?.data?.errorMessages || "Failed to update profile");
-        toast.error("Update failed")
-        console.log(err);
-        
-      })
-      .finally(() => {
-        dispatch(disableLoading())
-      })
-
-    }
+        .catch((err: any) => {
+          setError(
+            err.response?.data?.errorMessages || "Failed to update profile"
+          );
+          toast.error("Update failed");
+          console.log(err);
+        })
+        .finally(() => {
+          dispatch(disableLoading());
+        });
+    };
     return (
-        <Dialog
-          visible={showFormPassword}
-          onHide={() => setShowFormPassword(false)}
-          modal
-          className="p-fluid"
-          header={'Reset password'}
-          breakpoints={{ '3000px': '40vw','960px': '75vw', '641px': '90vw' }}
-          footer={() => (
-              <div className="flex justify-center  gap-2 mt-10">
-              <Button
-                label={'Close'}
-                icon='pi pi-times'
-                onClick={() => setShowFormPassword(false)}
-                severity="secondary" outlined
-              />
-              <Button
-                  label={'Save'}
-                  icon='pi pi-check'
-                  onClick={submit}
-                  autoFocus
-                />
-            </div>
-          )}
-        >
-          <div className="">
-            <label htmlFor="newPassword">New Password</label>
-            <InputText
-              type="password"
-              id="newPassword"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
+      <Dialog
+        visible={showFormPassword}
+        onHide={() => setShowFormPassword(false)}
+        modal
+        className="p-fluid"
+        header={"Reset password"}
+        breakpoints={{ "3000px": "40vw", "960px": "75vw", "641px": "90vw" }}
+        footer={() => (
+          <div className="flex justify-center  gap-2 mt-10">
+            <Button
+              label={"Close"}
+              icon="pi pi-times"
+              onClick={() => setShowFormPassword(false)}
+              severity="secondary"
+              outlined
+            />
+            <Button
+              label={"Save"}
+              icon="pi pi-check"
+              onClick={submit}
+              autoFocus
             />
           </div>
-          <div className="mt-5">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <InputText
-              type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-            {error && <p className="text-red-500 text-xs">{error}</p>}
-
-        </Dialog>
-    )
-  }
+        )}
+      >
+        <div className="">
+          <label htmlFor="newPassword">New Password</label>
+          <InputText
+            type="password"
+            id="newPassword"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mt-5">
+          <label htmlFor="confirmPassword">Confirm Password</label>
+          <InputText
+            type="password"
+            id="confirmPassword"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+        {error && <p className="text-red-500 text-xs">{error}</p>}
+      </Dialog>
+    );
+  };
 
   const SideBarProfile = () => {
-    return  (
+    return (
       <div>
-        <Sidebar 
+        <Sidebar
           visible={showProfile}
           onHide={() => setShowProfile(!showProfile)}
           position="right"
           showCloseIcon={false}
         >
           <div className="flex justify-center">
-              <img
-                  className="w-30 h-30 rounded-full"
-                  src={user.avatarUrl ? `${
-                    import.meta.env.VITE_REACT_APP_BACK_END_LINK_UPLOAD_USER
-                  }/${user?.avatarUrl}` : '/images/no-img.png'}
-                  alt="User profile"
-              />
+            <img
+              className="w-30 h-30 rounded-full"
+              src={
+                user.avatarUrl
+                  ? `${
+                      import.meta.env.VITE_REACT_APP_BACK_END_LINK_UPLOAD_USER
+                    }/${user?.avatarUrl}`
+                  : "/images/no-img.png"
+              }
+              alt="User profile"
+            />
           </div>
-          <div className="flex justify-center mt-10">  
-              <p className="text-3xl text-gray-700">
-                {user?.fullname ?? "Austin Robertson"}
-              </p>
+          <div className="flex justify-center mt-10">
+            <p className="text-3xl text-gray-700">
+              {user?.fullname ?? "Austin Robertson"}
+            </p>
           </div>
           <div className="flex justify-center">
-              <p className="text-gray-500">
-                {user?.roles ?? "Administrator"}
-              </p>
+            <p className="text-gray-500">{user?.roles ?? "Administrator"}</p>
           </div>
           <div className="flex justify-center mt-20 gap-2">
-                <Button
-                  size="small"
-                  label={'Edit profile'}
-                  icon='pi pi-check'
-                  className="w-50"
-                  onClick={() => {
-                    setShowFormEdit(true)
-                    setShowProfile(!showProfile)
-                  }}
-                />
+            <Button
+              size="small"
+              label={"Edit profile"}
+              icon="pi pi-check"
+              className="w-50"
+              onClick={() => {
+                setShowFormEdit(true);
+                setShowProfile(!showProfile);
+              }}
+            />
           </div>
           <div className="flex justify-center mt-5 gap-2">
-   
-                <Button
-                  size="small"
-                  label={'Change password'}
-                  icon='pi pi-check'
-                  className="w-50"
-                  onClick={() => {
-                    setShowFormPassword(true)
-                    setShowProfile(!showProfile)
-                  }}
-                />
+            <Button
+              size="small"
+              label={"Change password"}
+              icon="pi pi-check"
+              className="w-50"
+              onClick={() => {
+                setShowFormPassword(true);
+                setShowProfile(!showProfile);
+              }}
+            />
           </div>
         </Sidebar>
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200">
@@ -485,7 +494,7 @@ export default function Navbar() {
                     <div
                       className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded transition"
                       onClick={() => {
-                        setShowProfile(true)
+                        setShowProfile(true);
                         // setIsProfileOpen(false)
                       }}
                     >
@@ -564,6 +573,6 @@ export default function Navbar() {
         <FormEditProfile />
         <FormResetPassword />
       </div>
-    </nav>  
+    </nav>
   );
 }

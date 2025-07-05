@@ -11,10 +11,15 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = {FieldNotEmptyValidator.class})
+@Constraint(validatedBy = {
+      FieldNotEmptyValidator.class
+})
 public @interface FieldNotEmpty {
   String message() default "{field} cannot be empty";
+
   Class<?>[] groups() default {};
+
   Class<? extends Payload>[] payload() default {};
+
   String field();
 }
