@@ -63,8 +63,8 @@ export default function BookingForm({
 
   const paymentMethods = commonData.paymentMethods;
 
-  // load owner
-  const loadOwners = async (keyword = "", page = 0) => {
+  // load customer
+  const loadCustomers = async (keyword = "", page = 0) => {
     const result = await dispatch(
       fetchCommonData({
         types: ["customers"],
@@ -82,36 +82,53 @@ export default function BookingForm({
   };
 
   useEffect(() => {
-    loadOwners();
+    loadCustomers();
   }, []);
 
   // load by id
   useEffect(() => {
     if (id && open) {
       loadDataById(id).then((data) => {
-        setStatus(data.status ?? true);
+        // booking
+        const customerData = customers.find((c: any) => c.id === data.userId);
+        setSelectedCustomer(customerData);
+
         setNote(data.note || "");
-        setSelectedCustomer(
-          data.userId ? { id: data.userId, fullName: data.userName } : null
-        );
-        setSelectedPayment(
-          data.paymentId ? { id: data.paymentId, name: data.paymentName } : null
-        );
-        setNotePayment(data.notePayment || "");
-        setStatusPayment(data.paymentStatus ?? true);
+        setStatus(data.status ?? true);
+
         const checkIn = data.checkInTime ? new Date(data.checkInTime) : null;
         const checkOut = data.checkOutTime ? new Date(data.checkOutTime) : null;
         setCheckInDateTime(checkIn);
         setCheckOutDateTime(checkOut);
-        setAmount(data.amount?.toString() || "0");
+
+        let isHourlyBooking = true;
         if (checkIn && checkOut) {
           const hoursDiff =
             (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
-          setIsHourly(hoursDiff <= 24);
-          if (hoursDiff <= 24) {
+          const isCheckInAt2PM =
+            checkIn.getHours() === 14 && checkIn.getMinutes() === 0;
+          const isCheckOutAtNoon =
+            checkOut.getHours() === 12 && checkOut.getMinutes() === 0;
+          const isNextDay = checkOut.getDate() === checkIn.getDate() + 1;
+          if (isCheckInAt2PM && isCheckOutAtNoon && isNextDay) {
+            isHourlyBooking = false;
+          } else {
+            isHourlyBooking = hoursDiff <= 24;
             setSelectedHours(Math.ceil(hoursDiff));
           }
         }
+        setIsHourly(isHourlyBooking);
+
+        // payment
+        const selectedPaymentMethod = paymentMethods?.find(
+          (p: any) => p.id === data.paymentId
+        );
+        setSelectedPayment(selectedPaymentMethod);
+
+        setAmount(data.amount?.toString() || "0");
+
+        setNotePayment(data.notePayment || "");
+        setStatusPayment(data.paymentStatus ?? true);
       });
     } else {
       // Reset form for create mode
@@ -198,43 +215,61 @@ export default function BookingForm({
 
   // submit
   const submit = async () => {
-    if (!validateDateTimes()) return;
     setSubmitting(true);
+
+    if (!validateDateTimes()) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Choose check in and check out time",
+        life: 3000,
+      });
+    }
+
     const formData = new FormData();
     formData.append("userId", selectedCustomer?.id || "");
-    formData.append("roomId", roomId);
+    formData.append("roomId", roomId || "");
     formData.append(
       "checkInTime",
-      format(checkInDateTime!, "yyyy-MM-dd'T'HH:mm")
+      format(checkInDateTime!, "yyyy-MM-dd'T'HH:mm") || ""
     );
     formData.append(
       "checkOutTime",
-      format(checkOutDateTime!, "yyyy-MM-dd'T'HH:mm")
+      format(checkOutDateTime!, "yyyy-MM-dd'T'HH:mm") || ""
     );
 
-    formData.append("status", JSON.stringify(status));
-    formData.append("note", note);
+    formData.append("status", JSON.stringify(status) || "");
+    formData.append("note", note || "");
 
-    formData.append("amount", amount);
-    formData.append("methodId", selectedPayment?.id);
-    formData.append("notePayment", notePayment);
-    formData.append("statusPayment", statusPayment.toString());
+    formData.append("amount", amount || "");
+    formData.append("methodId", selectedPayment?.id || "");
+    formData.append("notePayment", notePayment || "");
+    formData.append("statusPayment", JSON.stringify(statusPayment) || "");
 
     try {
-      if (id) await updateItem(id, formData);
-      else await createItem(formData);
-      toast.current?.show({
-        severity: "success",
-        summary: "Success",
-        detail: "Saved successfully",
-        life: 3000,
-      });
+      if (id) {
+        await updateItem(id, formData);
+        toast.current?.show({
+          severity: "success",
+          summary: "Success",
+          detail: "Booking updated",
+          life: 3000,
+        });
+      } else {
+        await createItem(formData);
+        toast.current?.show({
+          severity: "success",
+          summary: "Success",
+          detail: "Booking created",
+          life: 3000,
+        });
+      }
       onClose();
     } catch (err: any) {
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: err.response?.data?.message || "Failed",
+        detail: err.message || "Failed to save booking",
         life: 3000,
       });
     } finally {
@@ -273,6 +308,12 @@ export default function BookingForm({
     fetchData();
   }, [roomId]);
 
+  const getError = (field: string) =>
+    (error &&
+      typeof error === "object" &&
+      (error as Record<string, string>)[field]) ||
+    null;
+
   return (
     <>
       <Toast ref={toast} />
@@ -281,6 +322,27 @@ export default function BookingForm({
         onHide={onClose}
         header={mode === "edit" ? "Edit" : "Create"}
         modal
+        footer={
+          <div className="flex justify-center gap-2">
+            <Button
+              label="Close"
+              onClick={onClose}
+              severity="secondary"
+              outlined
+              disabled={submitting}
+              style={{ padding: "8px 40px" }}
+            />
+            <Button
+              label="Save"
+              onClick={submit}
+              severity="success"
+              disabled={submitting}
+              loading={submitting}
+              className="btn_submit"
+              style={{ padding: "8px 40px" }}
+            />
+          </div>
+        }
         style={{ width: "50%", maxWidth: "95vw" }}
         breakpoints={{ "960px": "85vw", "641px": "95vw" }}
       >
@@ -301,8 +363,15 @@ export default function BookingForm({
                 optionLabel="fullName"
                 filter
                 showClear
-                className="w-full"
+                className={`w-full border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                  getError("userId") ? "p-invalid" : ""
+                }`}
               />
+              {getError("userId") && (
+                <small className="text-red-600 text-xs mt-1 block">
+                  {getError("userId")}
+                </small>
+              )}
             </div>
             <div>
               <label
@@ -444,9 +513,17 @@ export default function BookingForm({
                   onChange={(e) => setSelectedPayment(e.value)}
                   options={paymentMethods}
                   optionLabel="name"
-                  showClear
-                  className="w-full"
+                  checkmark
+                  highlightOnSelect={false}
+                  className={`w-full border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                    getError("methodId") ? "p-invalid" : ""
+                  }`}
                 />
+                {getError("methodId") && (
+                  <small className="text-red-600 text-xs mt-1 block">
+                    {getError("methodId")}
+                  </small>
+                )}
               </div>
 
               <div>
@@ -496,22 +573,6 @@ export default function BookingForm({
 
             <label htmlFor="amount">Total</label>
             <div className="font-bold">{amount}</div>
-          </div>
-
-          <div className="flex justify-end gap-2 mt-4">
-            <Button
-              label="Close"
-              onClick={onClose}
-              severity="info"
-              outlined
-              disabled={submitting}
-            />
-            <Button
-              label="Save"
-              onClick={submit}
-              severity="success"
-              loading={submitting}
-            />
           </div>
         </div>
       </Dialog>

@@ -281,12 +281,6 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
 
   // find all
   public Page<HotelsRes> findHotels(Map<String, String> filters, Map<String, String> sort, int size, int page) {
-//    boolean isPermission = checkPermissionHotelForAdmin(token);
-//
-//    if (!isPermission) {
-//      throw new AppException(ErrorCode.ACCESS_DENIED);
-//    }
-
     Map<String, Object> filterMap = removedFiltersKey(filters);
     Map<String, Object> sortMap = removedSortedKey(sort);
 
@@ -322,8 +316,7 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
     });
   }
 
-  @Override
-  public Hotels update(Integer id, HotelDTO update) {
+  public Hotels updateHotel(Integer id, HotelDTO.HotelUpdateDTO update) {
     var hotelCrr = findById(id);
 
     AddressDTO addressDTO = new AddressDTO(
@@ -349,7 +342,7 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
 
     hotelCrr = Hotels.builder()
                      .id(hotelCrr.getId())
-                     .ownerId(update.getOwnerId())
+                     .ownerId(hotelCrr.getOwnerId())
                      .name(update.getName())
                      .description(update.getDescription())
                      .avatar(hotelCrr.getAvatar())
@@ -357,7 +350,7 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
                      .policyId(hotelCrr.getPolicyId())
                      .status(update.getStatus())
                      .approveId(hotelCrr.getApproveId())
-                     .note(update.getNoteHotel())
+                     .note(update.getNote())
                      .updatedAt(LocalDateTime.now())
                      .updatedBy(getAuthId())
                      .build();
@@ -369,7 +362,7 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
     List<Integer> incomingDocumentIds = update.getDocuments() != null
           ? update.getDocuments().stream()
                   .filter(doc -> doc.getDocumentId() != null)
-                  .map(HotelDTO.DocumentReq::getDocumentId)
+                  .map(HotelDTO.HotelUpdateDTO.DocumentReqUpdate::getDocumentId)
                   .toList()
           : new ArrayList<>();
 
@@ -380,7 +373,7 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
     }
 
     if (update.getDocuments() != null) {
-      for (HotelDTO.DocumentReq req : update.getDocuments()) {
+      for (HotelDTO.HotelUpdateDTO.DocumentReqUpdate req : update.getDocuments()) {
         DocumentsHotel documentsHotel;
         if (req.getDocumentId() != null) {
           documentsHotel = documentsHotelRepository.findById(req.getDocumentId())
@@ -396,12 +389,20 @@ public class HotelService extends BaseServiceImpl<Hotels, Integer, HotelDTO, Hot
         documentsHotel.setName(req.getDocumentName());
         documentsHotel.setTypeId(req.getTypeId());
 
-        if (req.getDocumentUrl() != null && !req.getDocumentUrl().isEmpty()) {
-          documentsHotel.setDocumentUrl(storageFileService.uploadDocument(req.getDocumentUrl()));
-        } else if (req.getExistingDocumentUrl() != null && !req.getExistingDocumentUrl().isEmpty()) {
-          documentsHotel.setDocumentUrl(req.getExistingDocumentUrl());
-        } else if (req.getDocumentId() == null) {
-          throw new AppException(ErrorCode.FIELD_NOT_EMPTY, "Document URL");
+        // Handle document URL based on keepDocumentUrl
+        if (Boolean.TRUE.equals(req.getKeepDocumentUrl())) {
+          // Keep existing document URL if available
+          if (documentsHotel.getDocumentUrl() == null && req.getDocumentUrl() != null && !req.getDocumentUrl()
+                                                                                             .isEmpty()) {
+            documentsHotel.setDocumentUrl(storageFileService.uploadDocument(req.getDocumentUrl()));
+          }
+        } else {
+          // Upload new file if provided
+          if (req.getDocumentUrl() != null && !req.getDocumentUrl().isEmpty()) {
+            documentsHotel.setDocumentUrl(storageFileService.uploadDocument(req.getDocumentUrl()));
+          } else if (req.getDocumentId() == null) {
+            throw new AppException(ErrorCode.FIELD_NOT_EMPTY, "Document URL");
+          }
         }
 
         documentsHotel.setUpdatedAt(LocalDateTime.now());

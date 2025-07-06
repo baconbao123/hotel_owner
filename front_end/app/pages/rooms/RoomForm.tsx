@@ -427,35 +427,35 @@ export default function RoomForm({
                     onChange={(e) => setRoomNumber(e.target.value)}
                     disabled={submitting}
                     className={`w-full p-2 border rounded-lg ${
-                      getError("name") ? "p-invalid" : ""
+                      getError("roomNumber") ? "p-invalid" : ""
                     }`}
                   />
-                  {getError("name") && (
+                  {getError("roomNumber") && (
                     <small className="text-red-500 text-xs mt-1">
-                      {getError("name")}
+                      {getError("roomNumber")}
                     </small>
                   )}
                 </div>
 
                 <div>
                   <label
-                    htmlFor="description"
+                    htmlFor="roomArea"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Room Area <span className="text-red-500">*</span>
                   </label>
                   <InputText
-                    id="description"
+                    id="roomArea"
                     value={roomArea}
                     onChange={(e) => setRoomArea(e.target.value)}
                     disabled={submitting}
                     className={`w-full p-2 border rounded-lg ${
-                      getError("description") ? "p-invalid" : ""
+                      getError("roomArea") ? "p-invalid" : ""
                     }`}
                   />
-                  {getError("description") && (
+                  {getError("roomArea") && (
                     <small className="text-red-500 text-xs mt-1">
-                      {getError("description")}
+                      {getError("roomArea")}
                     </small>
                   )}
                 </div>
@@ -465,13 +465,13 @@ export default function RoomForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div>
                   <label
-                    htmlFor="type"
+                    htmlFor="roomType"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Room Type <span className="text-red-500">*</span>
                   </label>
                   <Dropdown
-                    id="typeIds"
+                    id="roomType"
                     value={selectedType}
                     onChange={(e) => setSelectedType(e.value)}
                     options={roomTypes}
@@ -479,13 +479,13 @@ export default function RoomForm({
                     optionValue="id"
                     placeholder="Select Room Type"
                     className={`w-full ${
-                      getError("typeIds") ? "p-invalid" : ""
+                      getError("roomType") ? "p-invalid" : ""
                     }`}
                   />
 
-                  {getError("typeIds") && (
+                  {getError("roomType") && (
                     <small className="text-red-500 text-xs mt-1">
-                      {getError("typeIds")}
+                      {getError("roomType")}
                     </small>
                   )}
                 </div>
@@ -536,35 +536,35 @@ export default function RoomForm({
                     onChange={(e) => setPriceHour(e.target.value)}
                     disabled={submitting}
                     className={`w-full p-2 border rounded-lg ${
-                      getError("name") ? "p-invalid" : ""
+                      getError("priceHour") ? "p-invalid" : ""
                     }`}
                   />
-                  {getError("name") && (
+                  {getError("priceHour") && (
                     <small className="text-red-500 text-xs mt-1">
-                      {getError("name")}
+                      {getError("priceHour")}
                     </small>
                   )}
                 </div>
 
                 <div>
                   <label
-                    htmlFor="description"
+                    htmlFor="priceNight"
                     className="block text-sm font-medium text-gray-700 mb-1"
                   >
                     Price Night <span className="text-red-500">*</span>
                   </label>
                   <InputText
-                    id="description"
+                    id="priceNight"
                     value={priceNight}
                     onChange={(e) => setPriceNight(e.target.value)}
                     disabled={submitting}
                     className={`w-full p-2 border rounded-lg ${
-                      getError("description") ? "p-invalid" : ""
+                      getError("priceNight") ? "p-invalid" : ""
                     }`}
                   />
-                  {getError("description") && (
+                  {getError("priceNight") && (
                     <small className="text-red-500 text-xs mt-1">
-                      {getError("description")}
+                      {getError("priceNight")}
                     </small>
                   )}
                 </div>
@@ -585,12 +585,12 @@ export default function RoomForm({
                     onChange={(e) => setLmit(e.target.value)}
                     disabled={submitting}
                     className={`w-full p-2 border rounded-lg ${
-                      getError("name") ? "p-invalid" : ""
+                      getError("limitPerson") ? "p-invalid" : ""
                     }`}
                   />
-                  {getError("name") && (
+                  {getError("limitPerson") && (
                     <small className="text-red-500 text-xs mt-1">
-                      {getError("name")}
+                      {getError("limitPerson")}
                     </small>
                   )}
                 </div>

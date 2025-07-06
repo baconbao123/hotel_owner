@@ -22,6 +22,7 @@ public @interface FieldAndCheckRegexp {
   ForceType force() default ForceType.OPTIONAL;
 
   String regex();
-
+;
   String notice();
+
 }

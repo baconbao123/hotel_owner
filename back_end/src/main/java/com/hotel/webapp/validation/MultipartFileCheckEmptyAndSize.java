@@ -1,6 +1,6 @@
 package com.hotel.webapp.validation;
 
-import com.hotel.webapp.validation.validator.MaxSizeListImgValidator;
+import com.hotel.webapp.validation.validator.MultipartFileCheckEmptyAndSizeValidator;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
@@ -11,11 +11,15 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = MaxSizeListImgValidator.class)
-public @interface MaxSizeListImg {
-  String message() default "{value} images limit exceeded ";
+@Constraint(validatedBy = MultipartFileCheckEmptyAndSizeValidator.class)
+public @interface MultipartFileCheckEmptyAndSize {
+  String message() default "_NOT_EMPTY";
 
-  int value();
+  String field();
+
+  int value() default Integer.MAX_VALUE;
+
+  boolean force() default true;
 
   Class<?>[] groups() default {};
 

@@ -81,7 +81,7 @@ public class BookingService extends BaseServiceImpl<Booking, Integer, BookingDTO
   public Booking update(Integer id, BookingDTO update) {
     // booking
     Booking booking = repository.findById(id)
-                                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Booking not found"));
+                                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Booking"));
 
     // Update booking fields
     booking.setUserId(update.getUserId());
@@ -95,7 +95,7 @@ public class BookingService extends BaseServiceImpl<Booking, Integer, BookingDTO
 
     // Find and update payment
     Payment payment = paymentRepository.findPaymentByBookingId(booking.getId())
-                                       .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Payment not found"));
+                                       .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Payment"));
 
     payment.setMethodId(update.getMethodId());
     payment.setAmount(update.getAmount());
@@ -112,7 +112,7 @@ public class BookingService extends BaseServiceImpl<Booking, Integer, BookingDTO
     var res = repository.findBookingById(id);
 
     if (res == null) {
-      throw new AppException(ErrorCode.NOT_FOUND, "Booking");
+      throw new AppException(ErrorCode.NOT_FOUND, "Booking or Payment");
     }
 
     return res;

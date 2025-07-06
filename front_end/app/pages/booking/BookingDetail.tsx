@@ -24,10 +24,16 @@ export default function BookingDetail({
   const [roomNumber, setRoomNumber] = useState("");
   const [checkInTime, setCheckInTime] = useState("");
   const [checkOutTime, setCheckOutTime] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [amount, setAmount] = useState("");
+  const [notePayment, setNotePayment] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<boolean>(true);
+
   const [status, setStatus] = useState(true);
   const [createdData, setCreatedData] = useState("");
   const [createdAt, setCreatedAt] = useState("");
   const [updatedData, setUpdatedData] = useState("");
+
   const [updateAt, setUpdateAt] = useState("");
 
   const toast = useRef<Toast>(null);
@@ -43,6 +49,12 @@ export default function BookingDetail({
           setCheckInTime(data.checkInTime || "");
           setCheckOutTime(data.checkOutTime || "");
           setStatus(data.status ?? true);
+
+          setPaymentMethod(data.paymentName || "");
+          setAmount(data.amount || "");
+          setNotePayment(data.notePayment || "");
+          setPaymentStatus(data.paymentStatus || true);
+
           setCreatedAt(data.createdAt || "");
           setUpdateAt(data.updatedAt || "");
           setCreatedData(data.createdName || "");
@@ -82,7 +94,7 @@ export default function BookingDetail({
         className="p-fluid"
         breakpoints={{ "960px": "75vw", "641px": "90vw" }}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4 pr-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4 pr-4 mt-4">
           <div className="grid grid-cols-3 gap-2 items-center mb-2">
             <label htmlFor="name" className="font-bold col-span-1">
               Customer:
@@ -131,6 +143,49 @@ export default function BookingDetail({
               <Tag
                 value={status ? "Active" : "Inactive"}
                 severity={status ? "success" : "danger"}
+              />
+            </span>
+          </div>
+
+          <div></div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-4 pr-4 mt-4">
+          <div className="grid grid-cols-3 gap-2 items-center mb-2">
+            <label htmlFor="name" className="font-bold col-span-1">
+              Method
+            </label>
+            <span id="name" className="col-span-2">
+              {paymentMethod || "-"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 items-center mb-2">
+            <label htmlFor="description" className="font-bold col-span-1">
+              Payment Note:
+            </label>
+            <span id="description" className="col-span-2">
+              {notePayment || "-"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 items-center mb-2">
+            <label htmlFor="checkInTime" className="font-bold col-span-1">
+              Amount
+            </label>
+            <span id="checkInTime" className="col-span-2">
+              {amount ?? ""}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 items-center mb-2">
+            <label htmlFor="status" className="font-bold col-span-1">
+              Payment Status:
+            </label>
+            <span id="status" className="col-span-2">
+              <Tag
+                value={paymentStatus ? "Active" : "Inactive"}
+                severity={paymentStatus ? "success" : "danger"}
               />
             </span>
           </div>

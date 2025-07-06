@@ -1,9 +1,9 @@
 package com.hotel.webapp.controller;
 
 import com.hotel.webapp.dto.request.BookingDTO;
-import com.hotel.webapp.dto.response.PricesDTO;
 import com.hotel.webapp.dto.response.ApiResponse;
 import com.hotel.webapp.dto.response.BookingRes;
+import com.hotel.webapp.dto.response.PricesDTO;
 import com.hotel.webapp.entity.Booking;
 import com.hotel.webapp.service.owner.BookingService;
 import jakarta.validation.Valid;
@@ -23,14 +23,16 @@ import java.util.Map;
 public class BookingController {
   BookingService bookingService;
 
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @PostMapping
+        (consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ApiResponse<Booking> create(@Valid @ModelAttribute BookingDTO dto) {
     return ApiResponse.<Booking>builder()
                       .result(bookingService.create(dto))
                       .build();
   }
 
-  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//  @PutMapping(value = "/{id}")
   public ApiResponse<Booking> update(@PathVariable int id, @Valid @ModelAttribute BookingDTO dto) {
     return ApiResponse.<Booking>builder()
                       .result(bookingService.update(id, dto))

@@ -21,6 +21,7 @@ public class BookingDTO {
   @FieldNotEmpty(field = "Check Out Time")
   LocalDateTime checkOutTime;
   String note;
+  @FieldNotEmpty(field = "Status")
   Boolean status;
 
 //  LocalDateTime actualCheckInTime;
@@ -28,8 +29,11 @@ public class BookingDTO {
 
   //  payment
   //  Integer bookingId;
+  @FieldNotEmpty(field = "Method")
   Integer methodId;
+  @FieldNotEmpty(field = "Amount")
   BigDecimal amount;
   String notePayment;
+  @FieldNotEmpty(field = "Status")
   Boolean statusPayment;
 }

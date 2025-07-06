@@ -36,9 +36,9 @@ public class HotelController {
 //  }
 
   @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ApiResponse<Hotels> update(@PathVariable int id, @Valid @ModelAttribute HotelDTO hotelDTO) {
+  public ApiResponse<Hotels> update(@PathVariable int id, @Valid @ModelAttribute HotelDTO.HotelUpdateDTO hotelDTO) {
     return ApiResponse.<Hotels>builder()
-                      .result(hotelService.update(id, hotelDTO))
+                      .result(hotelService.updateHotel(id, hotelDTO))
                       .build();
   }
 

@@ -84,7 +84,7 @@ export default function HotelForm({
     "hoteltypes",
     "hotelfacilities",
     "hoteldocuments",
-  ]);  
+  ]);
 
   const provinces = commonData.provinces;
   const hotelTypes = commonData.hotelTypes;
@@ -195,8 +195,7 @@ export default function HotelForm({
     });
 
     // Documents
-    console.log("Submitting Documents:", documents);
-    documents.forEach((doc: any, index: any) => {
+    documents.forEach((doc: any, index: number) => {
       if (doc.documentName && doc.typeId !== null && doc.typeId !== undefined) {
         if (doc.documentId) {
           formData.append(
@@ -206,16 +205,15 @@ export default function HotelForm({
         }
         formData.append(`documents[${index}].documentName`, doc.documentName);
         formData.append(`documents[${index}].typeId`, doc.typeId.toString());
-        if (doc.documentUrl instanceof File) {
+        formData.append(
+          `documents[${index}].keepDocumentUrl`,
+          doc.keepDocumentUrl || true
+        );
+        if (!doc.keepDocumentUrl && doc.documentUrl instanceof File) {
           formData.append(
             `documents[${index}].documentUrl`,
             doc.documentUrl,
             doc.documentUrl.name
-          );
-        } else if (typeof doc.documentUrl === "string") {
-          formData.append(
-            `documents[${index}].existingDocumentUrl`,
-            doc.documentUrl
           );
         }
       } else {
@@ -322,8 +320,9 @@ export default function HotelForm({
                 documentId: doc.documentId,
                 documentName: doc.documentName,
                 typeId: doc.typeId,
-                documentUrl: doc.documentUrl,
+                documentUrl: null,
                 existingDocumentUrl: doc.documentUrl,
+                keepDocument: !!doc.documentUrl,
               })) || [
                 {
                   documentId: null,
@@ -331,6 +330,7 @@ export default function HotelForm({
                   typeId: null,
                   documentUrl: null,
                   existingDocumentUrl: null,
+                  keepDocument: false,
                 },
               ]
             );
@@ -342,6 +342,7 @@ export default function HotelForm({
                 typeId: null,
                 documentUrl: null,
                 existingDocumentUrl: null,
+                keepDocument: false,
               },
             ]);
           }
@@ -939,12 +940,12 @@ export default function HotelForm({
                         }
                         disabled={submitting}
                         className={`w-full p-2 border rounded-lg ${
-                          getError(`documentName-${index}`) ? "p-invalid" : ""
+                          getError(`documents`) ? "p-invalid" : ""
                         }`}
                       />
-                      {getError(`documentName-${index}`) && (
+                      {getError(`documents`) && (
                         <small className="text-red-500 text-xs mt-1">
-                          {getError(`documentName-${index}`)}
+                          {getError(`documents`)}
                         </small>
                       )}
                     </div>
@@ -966,22 +967,43 @@ export default function HotelForm({
                         optionValue="id"
                         placeholder="Select a document type"
                         className={`w-full ${
-                          getError(`documentType-${index}`) ? "p-invalid" : ""
+                          getError(`documents`) ? "p-invalid" : ""
                         }`}
                         disabled={submitting}
                       />
-                      {getError(`documentName-${index}`) && (
+                      {getError(`documents`) && (
                         <small className="text-red-500 text-xs mt-1">
-                          {getError(`documentName-${index}`)}
+                          {getError(`documents`)}
                         </small>
                       )}
                     </div>
+                    {doc.documentId && (
+                      <div className="flex items-center gap-4">
+                        <label
+                          htmlFor={`keepDocumentUrl-${index}`}
+                          className="text-sm font-medium text-gray-700"
+                        >
+                          Keep Existing Document
+                        </label>
+                        <InputSwitch
+                          id={`keepDocumentUrl-${index}`}
+                          checked={doc.keepDocumentUrl}
+                          onChange={(e) =>
+                            updateDocument(index, "keepDocumentUrl", e.value)
+                          }
+                          disabled={submitting}
+                        />
+                      </div>
+                    )}
                     <div>
                       <label
                         htmlFor={`documentUpload-${index}`}
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Document Upload <span className="text-red-500">*</span>
+                        Document Upload{" "}
+                        <span className="text-red-500">
+                          {doc.documentId ? "" : "*"}
+                        </span>
                       </label>
                       <div className="flex items-center gap-4 flex-wrap">
                         <FileUpload
@@ -991,6 +1013,7 @@ export default function HotelForm({
                           accept="application/pdf"
                           onSelect={(e) => {
                             updateDocument(index, "documentUrl", e.files[0]);
+                            updateDocument(index, "keepDocumentUrl", false);
                           }}
                           disabled={submitting}
                           className="w-auto"
@@ -998,7 +1021,14 @@ export default function HotelForm({
                             doc.documentUrl ? "Replace File" : "Choose File"
                           }
                         />
-                        {doc.documentUrl && (
+                        {getError("documents") && (
+                          <small className="text-red-500 text-xs mt-1">
+                            {getError("documents")}
+                          </small>
+                        )}
+
+                        {/* Preview for existing document in update mode */}
+                        {doc.documentId && doc.existingDocumentUrl && (
                           <div className="flex items-center gap-2 text-sm text-blue-500">
                             <i
                               className="pi pi-file-pdf"
@@ -1008,14 +1038,36 @@ export default function HotelForm({
                               href={`${
                                 import.meta.env
                                   .VITE_REACT_APP_BACK_END_UPLOAD_DOCUMENT
-                              }/${doc.documentUrl}`}
+                              }/${doc.existingDocumentUrl}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="hover:underline truncate max-w-[200px]"
-                              title={doc.documentUrl}
+                              title={doc.existingDocumentUrl}
                             >
-                              View Current File
+                              View Existing Document
                             </a>
+                          </div>
+                        )}
+                        {doc.documentUrl && !doc.keepDocumentUrl && (
+                          <div className="flex items-center gap-2 text-sm text-blue-500">
+                            <i
+                              className="pi pi-file-pdf"
+                              style={{ fontSize: "1rem" }}
+                            ></i>
+                            <span className="truncate max-w-[200px]">
+                              {doc.documentUrl.name}
+                            </span>
+                            {/* Preview link for newly uploaded file */}
+                            {doc.documentUrl instanceof File && (
+                              <a
+                                href={URL.createObjectURL(doc.documentUrl)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 hover:underline"
+                              >
+                                Preview
+                              </a>
+                            )}
                             <button
                               type="button"
                               onClick={() =>

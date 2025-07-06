@@ -1,7 +1,7 @@
 package com.hotel.webapp.dto.request;
 
 import com.hotel.webapp.validation.FieldNotEmpty;
-import com.hotel.webapp.validation.MaxSizeListImg;
+import com.hotel.webapp.validation.MultipartFileCheckEmptyAndSize;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,24 +15,33 @@ import java.util.List;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoomDTO {
+  @FieldNotEmpty(field = "Name")
   String name;
 
   String keepAvatar;
   MultipartFile roomAvatar;
 
+  @FieldNotEmpty(field = "Hotel")
   Integer hotelId;
+  @FieldNotEmpty(field = "Room number")
   Integer roomNumber;
+  @FieldNotEmpty(field = "Room Area")
   BigDecimal roomArea;
+  @FieldNotEmpty(field = "Room TYpe")
   Integer roomType;
+  @FieldNotEmpty(field = "Price Hours")
   BigDecimal priceHour;
+  @FieldNotEmpty(field = "Price Night")
   BigDecimal priceNight;
+  @FieldNotEmpty(field = "Limit Person")
   Integer limitPerson;
   String description;
   @FieldNotEmpty(field = "status")
   Boolean status;
 
+  @FieldNotEmpty(field = "facilities")
   List<Integer> facilities;
 
-  @MaxSizeListImg(value = 3)
+  @MultipartFileCheckEmptyAndSize(field = "Images", value = 3, force = false)
   List<ImagesReq> images;
 }
