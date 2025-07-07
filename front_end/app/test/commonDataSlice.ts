@@ -97,7 +97,7 @@ export const fetchCommonData = createAsyncThunk(
 
       const response = await $axios.get(
         `${
-          import.meta.env.VITE_REACT_APP_BACK_END_LINK
+          import.meta.env.VITE_REACT_APP_ADMIN_BACK_END_LINK
         }/common-data?${searchParams.toString()}`
       );
       if (response.status !== 200) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
@@ -25,6 +25,11 @@ interface Props {
   error: Object | null;
 }
 
+interface BookingTime {
+  checkInTime: string;
+  checkOutTime: string;
+}
+
 export default function BookingForm({
   roomId,
   id,
@@ -42,28 +47,23 @@ export default function BookingForm({
   const [isHourly, setIsHourly] = useState(true);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [selectedHours, setSelectedHours] = useState<number>(1);
-  const [customers, setCustomers] = useState<any>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
   const [note, setNote] = useState("");
   const [status, setStatus] = useState(true);
-
-  // payment
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [amount, setAmount] = useState<string>("0");
   const [notePayment, setNotePayment] = useState("");
   const [statusPayment, setStatusPayment] = useState<boolean>(true);
-
-  // data
   const [priceData, setPriceData] = useState<any>(null);
-
+  const [bookedHours, setBookedHours] = useState<BookingTime[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const dispatch = useAppDispatch();
   const toast = useRef<Toast>(null);
 
   const { commonData } = useCommonData(["paymentmethods"]);
-
   const paymentMethods = commonData.paymentMethods;
 
-  // load customer
+  // Load customers
   const loadCustomers = async (keyword = "", page = 0) => {
     const result = await dispatch(
       fetchCommonData({
@@ -73,11 +73,11 @@ export default function BookingForm({
       })
     );
     const res = result.payload as CommonData;
-    const newCustomers: any = res.customers || [];
+    const newCustomers: any[] = res.customers || [];
     if (page === 0) {
       setCustomers(newCustomers);
     } else {
-      setCustomers((prev: any) => [...prev, ...newCustomers]);
+      setCustomers((prev) => [...prev, ...newCustomers]);
     }
   };
 
@@ -85,14 +85,38 @@ export default function BookingForm({
     loadCustomers();
   }, []);
 
-  // load by id
+  // Debounced fetch booked hours
+  const fetchBookedHours = useCallback(
+    async (date: string) => {
+      try {
+        const res = await $axios.get(
+          `/booking/${roomId}/booked-hours?date=${date}`
+        );
+        setBookedHours(res.data.result);
+      } catch (err) {
+        console.error("Failed to fetch booked hours", err);
+      }
+    },
+    [roomId]
+  );
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (checkInDateTime) {
+      const date = format(checkInDateTime, "yyyy-MM-dd");
+      timeoutId = setTimeout(() => fetchBookedHours(date), 500);
+    } else {
+      setBookedHours([]);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [checkInDateTime, fetchBookedHours]);
+
+  // Load data by ID
   useEffect(() => {
     if (id && open) {
       loadDataById(id).then((data) => {
-        // booking
         const customerData = customers.find((c: any) => c.id === data.userId);
         setSelectedCustomer(customerData);
-
         setNote(data.note || "");
         setStatus(data.status ?? true);
 
@@ -108,7 +132,7 @@ export default function BookingForm({
           const isCheckInAt2PM =
             checkIn.getHours() === 14 && checkIn.getMinutes() === 0;
           const isCheckOutAtNoon =
-            checkOut.getHours() === 12 && checkOut.getMinutes() === 0;
+            checkOut.getHours() === 12 && checkIn.getMinutes() === 0;
           const isNextDay = checkOut.getDate() === checkIn.getDate() + 1;
           if (isCheckInAt2PM && isCheckOutAtNoon && isNextDay) {
             isHourlyBooking = false;
@@ -119,19 +143,15 @@ export default function BookingForm({
         }
         setIsHourly(isHourlyBooking);
 
-        // payment
         const selectedPaymentMethod = paymentMethods?.find(
           (p: any) => p.id === data.paymentId
         );
         setSelectedPayment(selectedPaymentMethod);
-
         setAmount(data.amount?.toString() || "0");
-
         setNotePayment(data.notePayment || "");
         setStatusPayment(data.paymentStatus ?? true);
       });
     } else {
-      // Reset form for create mode
       setStatus(true);
       setCheckInDateTime(null);
       setCheckOutDateTime(null);
@@ -144,35 +164,18 @@ export default function BookingForm({
       setIsHourly(true);
       setSelectedHours(1);
     }
-  }, [id, open, loadDataById]);
+  }, [id, open, loadDataById, customers, paymentMethods]);
 
-  // handle change time
-  const handleCheckInChange = (e: any) => {
-    const newDate = e.value as Date | null;
-    setCheckInDateTime(newDate);
-    if (isHourly && newDate) {
-      const checkOut = addHours(newDate, selectedHours);
-      setCheckOutDateTime(checkOut);
-    } else if (!isHourly && newDate) {
-      const fixedCheckIn = set(startOfDay(newDate), { hours: 14, minutes: 0 });
-      const fixedCheckOut = set(addDays(fixedCheckIn, 1), {
-        hours: 12,
-        minutes: 0,
-      });
-      setCheckInDateTime(fixedCheckIn);
-      setCheckOutDateTime(fixedCheckOut);
-    }
-  };
+  // Fetch prices data
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await $axios.get(`/booking/${roomId}/prices`);
+      setPriceData(res.data.result);
+    };
+    fetchData();
+  }, [roomId]);
 
-  const handleHoursChange = (e: any) => {
-    setSelectedHours(e.value);
-    if (isHourly && checkInDateTime) {
-      const newCheckOut = addHours(checkInDateTime, e.value);
-      setCheckOutDateTime(newCheckOut);
-    }
-  };
-
-  // handle amount
+  // Handle amount calculation
   useEffect(() => {
     if (priceData) {
       if (isHourly) {
@@ -188,10 +191,172 @@ export default function BookingForm({
     }
   }, [isHourly, selectedHours, priceData]);
 
-  // handle change time
+  // Handle check-in change with validation
+  const handleCheckInChange = (e: any) => {
+    const newDate = e.value as Date | null;
+    if (!newDate) {
+      setCheckInDateTime(null);
+      setCheckOutDateTime(null);
+      return;
+    }
+
+    // Validate if the selected time is within a booked slot
+    const isBooked = bookedHours.some((booking) => {
+      const bookingCheckIn = new Date(booking.checkInTime);
+      const bookingCheckOut = new Date(booking.checkOutTime);
+      return (
+        (newDate.toDateString() === bookingCheckOut.toDateString() &&
+          newDate < bookingCheckOut) ||
+        (newDate.toDateString() === bookingCheckIn.toDateString() &&
+          newDate >= bookingCheckIn) ||
+        (newDate > bookingCheckIn && newDate < bookingCheckOut)
+      );
+    });
+
+    if (isBooked) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Invalid Check-In Time",
+        detail: "Selected time is already booked.",
+        life: 3000,
+      });
+      return;
+    }
+
+    setCheckInDateTime(newDate);
+    if (isHourly && newDate) {
+      const checkOut = addHours(newDate, selectedHours);
+      setCheckOutDateTime(checkOut);
+    } else if (!isHourly && newDate) {
+      const fixedCheckIn = set(startOfDay(newDate), { hours: 14, minutes: 0 });
+      const fixedCheckOut = set(addDays(fixedCheckIn, 1), {
+        hours: 12,
+        minutes: 0,
+      });
+      setCheckInDateTime(fixedCheckIn);
+      setCheckOutDateTime(fixedCheckOut);
+    }
+  };
+
+  // Handle hour selection from grid
+  const handleHourSelect = (hour: number) => {
+    if (!checkInDateTime) return;
+    const newCheckIn = new Date(checkInDateTime);
+    newCheckIn.setHours(hour, 0, 0, 0);
+
+    const isBooked = bookedHours.some((booking) => {
+      const bookingCheckIn = new Date(booking.checkInTime);
+      const bookingCheckOut = new Date(booking.checkOutTime);
+      return (
+        (newCheckIn.toDateString() === bookingCheckOut.toDateString() &&
+          newCheckIn < bookingCheckOut) ||
+        (newCheckIn.toDateString() === bookingCheckIn.toDateString() &&
+          newCheckIn >= bookingCheckIn) ||
+        (newCheckIn > bookingCheckIn && newCheckIn < bookingCheckOut)
+      );
+    });
+
+    if (isBooked) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Invalid Check-In Time",
+        detail: "Selected hour is already booked.",
+        life: 3000,
+      });
+      return;
+    }
+
+    setCheckInDateTime(newCheckIn);
+    if (isHourly) {
+      const checkOut = addHours(newCheckIn, selectedHours);
+      setCheckOutDateTime(checkOut);
+    }
+  };
+
+  // Handle hours change
+  const handleHoursChange = (e: any) => {
+    const hours = e.value;
+    if (checkInDateTime) {
+      const checkOut = addHours(checkInDateTime, hours);
+      const isBooked = bookedHours.some((booking) => {
+        const bookingCheckIn = new Date(booking.checkInTime);
+        const bookingCheckOut = new Date(booking.checkOutTime);
+        return checkOut > bookingCheckIn && checkInDateTime < bookingCheckOut;
+      });
+
+      if (isBooked) {
+        toast.current?.show({
+          severity: "error",
+          summary: "Invalid Duration",
+          detail: "Selected duration overlaps with a booked slot.",
+          life: 3000,
+        });
+        return;
+      }
+    }
+
+    setSelectedHours(hours);
+    if (isHourly && checkInDateTime) {
+      setCheckOutDateTime(addHours(checkInDateTime, hours));
+    }
+  };
+
+  // Handle booking mode change
+  useEffect(() => {
+    if (!checkInDateTime) return;
+    if (isHourly) {
+      setCheckOutDateTime(addHours(checkInDateTime, selectedHours));
+    } else {
+      const fixedCheckIn = set(startOfDay(checkInDateTime), {
+        hours: 14,
+        minutes: 0,
+      });
+      const fixedCheckOut = set(addDays(fixedCheckIn, 1), {
+        hours: 12,
+        minutes: 0,
+      });
+      setCheckInDateTime(fixedCheckIn);
+      setCheckOutDateTime(fixedCheckOut);
+    }
+  }, [isHourly, checkInDateTime, selectedHours]);
+
+  // Filter available hours
+  const availableHours = [1, 2, 3, 4, 5].filter((h) => {
+    if (!checkInDateTime) return true;
+    const checkOut = addHours(checkInDateTime, h);
+    return !bookedHours.some((booking) => {
+      const bookingCheckIn = new Date(booking.checkInTime);
+      const bookingCheckOut = new Date(booking.checkOutTime);
+      return checkOut > bookingCheckIn && checkInDateTime < bookingCheckOut;
+    });
+  });
+
+  // Generate hour slots for display
+  const hourSlots = Array.from({ length: 24 }, (_, i) => i).map((hour) => {
+    const isBooked = bookedHours.some((booking) => {
+      const bookingCheckIn = new Date(booking.checkInTime);
+      const bookingCheckOut = new Date(booking.checkOutTime);
+      const checkInDate = new Date(checkInDateTime || new Date());
+      checkInDate.setHours(hour, 0, 0, 0);
+      return (
+        (checkInDate.toDateString() === bookingCheckOut.toDateString() &&
+          checkInDate < bookingCheckOut) ||
+        (checkInDate.toDateString() === bookingCheckIn.toDateString() &&
+          checkInDate >= bookingCheckIn) ||
+        (checkInDate > bookingCheckIn && checkInDate < bookingCheckOut)
+      );
+    });
+    return {
+      hour,
+      isBooked,
+    };
+  });
+
+  // Validate date times
   const validateDateTimes = () => {
     const now = new Date();
     if (!checkInDateTime || !checkOutDateTime) return false;
+
     if (isBefore(checkInDateTime, now)) {
       toast.current?.show({
         severity: "error",
@@ -201,6 +366,7 @@ export default function BookingForm({
       });
       return false;
     }
+
     if (isBefore(checkOutDateTime, checkInDateTime)) {
       toast.current?.show({
         severity: "error",
@@ -210,10 +376,29 @@ export default function BookingForm({
       });
       return false;
     }
+
+    const isBooked = bookedHours.some((booking) => {
+      const bookingCheckIn = new Date(booking.checkInTime);
+      const bookingCheckOut = new Date(booking.checkOutTime);
+      return (
+        checkInDateTime < bookingCheckOut && checkOutDateTime > bookingCheckIn
+      );
+    });
+
+    if (isBooked) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Time Conflict",
+        detail: "Selected time slot is already booked.",
+        life: 3000,
+      });
+      return false;
+    }
+
     return true;
   };
 
-  // submit
+  // Submit form
   const submit = async () => {
     setSubmitting(true);
 
@@ -221,9 +406,11 @@ export default function BookingForm({
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: "Choose check in and check out time",
+        detail: "Choose valid check-in and check-out times",
         life: 3000,
       });
+      setSubmitting(false);
+      return;
     }
 
     const formData = new FormData();
@@ -237,10 +424,8 @@ export default function BookingForm({
       "checkOutTime",
       format(checkOutDateTime!, "yyyy-MM-dd'T'HH:mm") || ""
     );
-
     formData.append("status", JSON.stringify(status) || "");
     formData.append("note", note || "");
-
     formData.append("amount", amount || "");
     formData.append("methodId", selectedPayment?.id || "");
     formData.append("notePayment", notePayment || "");
@@ -276,37 +461,6 @@ export default function BookingForm({
       setSubmitting(false);
     }
   };
-
-  // handle change time
-  useEffect(() => {
-    if (!checkInDateTime) return;
-
-    if (isHourly) {
-      setCheckOutDateTime(addHours(checkInDateTime, selectedHours));
-    } else {
-      const fixedCheckIn = set(startOfDay(checkInDateTime), {
-        hours: 14,
-        minutes: 0,
-      });
-      const fixedCheckOut = set(addDays(fixedCheckIn, 1), {
-        hours: 12,
-        minutes: 0,
-      });
-      setCheckInDateTime(fixedCheckIn);
-      setCheckOutDateTime(fixedCheckOut);
-    }
-  }, [isHourly]);
-
-  // fetch prices data
-  useEffect(() => {
-    const fetchData = async () => {
-      const res = await $axios.get(`/booking/${roomId}/prices`);
-      setPriceData(res.data.result);
-      console.log(res.data.result.priceHours);
-    };
-
-    fetchData();
-  }, [roomId]);
 
   const getError = (field: string) =>
     (error &&
@@ -388,7 +542,6 @@ export default function BookingForm({
               />
             </div>
           </div>
-
           <div className="flex gap-4 items-center">
             <label className="font-bold">Booking Mode:</label>
             <Button
@@ -402,7 +555,6 @@ export default function BookingForm({
               onClick={() => setIsHourly(false)}
             />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             {isHourly && (
               <div>
@@ -415,7 +567,7 @@ export default function BookingForm({
                 <Dropdown
                   id="hourly"
                   value={selectedHours}
-                  options={[1, 2, 3, 4, 5].map((h) => ({
+                  options={availableHours.map((h) => ({
                     label: `${h} hour(s)`,
                     value: h,
                   }))}
@@ -425,7 +577,6 @@ export default function BookingForm({
               </div>
             )}
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label
@@ -441,8 +592,31 @@ export default function BookingForm({
                 showTime
                 hourFormat="24"
                 minDate={new Date()}
+                dateFormat="yy/mm/dd"
                 className="w-full"
               />
+              {isHourly && checkInDateTime && (
+                <div className="mt-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Available Hours
+                  </label>
+                  <div className="grid grid-cols-6 gap-2">
+                    {hourSlots.map((slot) => (
+                      <Button
+                        key={slot.hour}
+                        label={`${slot.hour}:00`}
+                        className={`p-2 text-sm ${
+                          slot.isBooked
+                            ? "bg-red-200 text-red-800 cursor-not-allowed"
+                            : "bg-green-200 text-green-800 hover:bg-green-300"
+                        }`}
+                        disabled={slot.isBooked}
+                        onClick={() => handleHourSelect(slot.hour)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             {isHourly ? (
               <div>
@@ -458,6 +632,7 @@ export default function BookingForm({
                   showTime
                   hourFormat="24"
                   disabled
+                  dateFormat="yy/mm/dd"
                   className="w-full"
                 />
               </div>
@@ -475,11 +650,11 @@ export default function BookingForm({
                   showTime
                   hourFormat="24"
                   disabled
+                  dateFormat="yy/mm/dd"
                   className="w-full"
                 />
               </div>
             )}
-
             <div className="flex items-center gap-4">
               <label
                 htmlFor="status"
@@ -495,10 +670,8 @@ export default function BookingForm({
               />
             </div>
           </div>
-
           <div className="mt-10">
             <label className="font-bold">Payment</label>
-
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <label
@@ -525,7 +698,6 @@ export default function BookingForm({
                   </small>
                 )}
               </div>
-
               <div>
                 <label
                   htmlFor="notePayment"
@@ -541,7 +713,6 @@ export default function BookingForm({
                   className="w-full p-2 border rounded-lg"
                 />
               </div>
-
               <div className="flex items-center gap-4">
                 <label
                   htmlFor="statusPayment"
@@ -558,19 +729,15 @@ export default function BookingForm({
               </div>
             </div>
           </div>
-
           <div className="flex justify-between">
             {priceData ? (
               <div>
-                <>
-                  Price Hours: {priceData.priceHours} <br />
-                  Price Night: {priceData.priceNights}
-                </>
+                Price Hours: {priceData.priceHours} <br />
+                Price Night: {priceData.priceNights}
               </div>
             ) : (
               "Loading prices..."
             )}
-
             <label htmlFor="amount">Total</label>
             <div className="font-bold">{amount}</div>
           </div>

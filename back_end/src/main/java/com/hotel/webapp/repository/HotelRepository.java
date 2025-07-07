@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -65,4 +66,22 @@ public interface HotelRepository extends BaseRepository<Hotels, Integer> {
   @Query("select h from Hotels h " +
         "where h.ownerId = :ownerId and h.deletedAt is null")
   Page<Hotels> findAllByOwnerId(Integer ownerId, Specification<Hotels> specification, Pageable pageRequest);
+
+  @Query("select h from  Hotels h where h.deletedAt is null")
+  Page<Hotels> getHotelsInfo(Pageable pageable);
+
+  // find by id for admin
+  @Query("SELECT h.id, h.name, h.addressId, h.avatar, h.description, hp.id, hp.name, hp.description, " +
+        "r.id, r.name, r.roomAvatar, r.roomArea, r.priceNight, r.priceHour, rt.name, r.roomNumber, r.limitPerson, r.description " +
+        "FROM Hotels h " +
+        "JOIN HotelPolicy hp ON hp.hotelId = h.id " +
+        "LEFT JOIN Rooms r ON r.hotelId = h.id " +
+        "LEFT JOIN RoomType rt ON rt.id = r.roomType " +
+        "LEFT JOIN Booking b ON b.roomId = r.id AND b.status = true " +
+        "WHERE h.id = :hotelId " +
+        "AND r.deletedAt IS NULL " +
+        "AND rt.deletedAt IS NULL " +
+        "AND (b.id IS NULL OR (b.checkOutTime <= CURRENT_TIMESTAMP " +
+        "AND b.id = (SELECT MAX(b2.id) FROM Booking b2 WHERE b2.roomId = r.id AND b2.deletedAt IS NULL AND b2.status = true)))")
+  List<Object[]> findHotelDetail(@Param("hotelId") Integer hotelId);
 }

@@ -678,7 +678,7 @@ export default function HotelForm({
                           : undefined
                       }
                       onFileChange={(file) => setSelectedFile(file)}
-                      maxFileSize={2}
+                      maxFileSize={100}
                       disabled={submitting}
                     />
                     {getError("avatar") && (

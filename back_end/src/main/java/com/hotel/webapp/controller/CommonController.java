@@ -33,18 +33,18 @@ public class CommonController {
     AttributeDataResponse.AttributeDataResponseBuilder builder = AttributeDataResponse.builder();
     for (String type : types) {
       switch (type.toLowerCase()) {
-        case "provinces":
-          builder.provinces(localService.getProvinces());
-          break;
-        case "hoteltypes":
-          builder.hotelTypes(hotelService.findTypeHotels());
-          break;
-        case "hoteldocuments":
-          builder.documentTypes(hotelService.findDocumentHotels());
-          break;
-        case "hotelfacilities":
-          builder.hotelFacilities(hotelService.findFacilities());
-          break;
+//        case "provinces":
+//          builder.provinces(localService.getProvinces());
+//          break;
+//        case "hoteltypes":
+//          builder.hotelTypes(hotelService.findTypeHotels());
+//          break;
+//        case "hoteldocuments":
+//          builder.documentTypes(hotelService.findDocumentHotels());
+//          break;
+//        case "hotelfacilities":
+//          builder.hotelFacilities(hotelService.findFacilities());
+//          break;
         case "paymentmethods":
           builder.paymentMethods(paymentService.findAllPayment());
           break;

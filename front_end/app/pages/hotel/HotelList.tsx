@@ -18,6 +18,8 @@ import type { RootState } from "~/store";
 import Loading from "~/components/common/Loading";
 import { SkeletonTemplate } from "~/components/common/skeleton";
 import { Image } from "antd";
+import Cookies from "js-cookie";
+import $axios from "~/axios";
 
 export default function RoleList() {
   const [selectedId, setSelectedId] = useState<string>();
@@ -102,18 +104,72 @@ export default function RoleList() {
     </div>
   );
 
-  const statusRoom = (row: any) => (
-    <div className="flex justify-center">
-      <Link to={`/rooms/${row.id}`}>
+  useEffect(() => {
+    const checkTokenAuthrozied = async () => {
+      try {
+        const token = Cookies.get("token");
+        const res = await $axios.get("/auth/me/permission-hotel", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.data !== true) {
+          toast.current?.show({
+            severity: "error",
+            summary: "Access Denied",
+            detail: "You do not have permission to access hotels.",
+            life: 3000,
+          });
+        }
+      } catch (err) {
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: "Failed to verify permissions.",
+          life: 3000,
+        });
+      }
+    };
+
+    checkTokenAuthrozied();
+  }, []);
+
+  const statusRoom = (row: any) => {
+    const handleViewRooms = async () => {
+      try {
+        const token = Cookies.get("token");
+
+        const res = await $axios.get("/auth/me/permission-hotel", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.data === true) {
+          window.location.href = `http://localhost:5174/rooms/${row.id}`;
+        }
+      } catch (err: any) {
+        if (err.response?.status === 403) {
+          alert("You do not have access to this hotel.");
+        } else {
+          alert("An error occurred. Please try again.");
+        }
+      }
+    };
+
+    return (
+      <div className="flex justify-center">
         <Button
           label="View Rooms"
           severity="info"
           text
           style={{ color: "#0ea5e9" }}
+          onClick={handleViewRooms}
         />
-      </Link>
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <div className="main-container">
