@@ -3,8 +3,7 @@ import { Upload, Image } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { Toast as PrimeToast } from "primereact/toast";
-import "antd/dist/reset.css";
-import { v4 as uuidv4 } from "uuid";
+// import "antd/dist/reset.css";
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 type RcFile = import("antd/es/upload").RcFile;
@@ -13,7 +12,6 @@ interface GalleryUploaderProps {
   initialImageUrls?: string[];
   onFilesChange: (files: RcFile[]) => void;
   onRemoveExistingImage?: (index: number) => void;
-  maxFileSize?: number;
   disabled?: boolean;
   maxCount?: number;
 }
@@ -30,7 +28,6 @@ const GalleryUploader: React.FC<GalleryUploaderProps> = ({
   initialImageUrls,
   onFilesChange,
   onRemoveExistingImage,
-  maxFileSize = 2,
   disabled = false,
   maxCount = 5,
 }) => {
@@ -77,6 +74,9 @@ const GalleryUploader: React.FC<GalleryUploaderProps> = ({
     setPreviewOpen(true);
   };
 
+  const generateId = () => {
+    return Math.random().toString(36).substr(2, 9) + Date.now();
+  };
   const handleFileChange: UploadProps["onChange"] = ({
     fileList: newFileList,
     file,
@@ -89,8 +89,8 @@ const GalleryUploader: React.FC<GalleryUploaderProps> = ({
         if (!f.uid || f.uid.startsWith("upload-")) {
           return {
             ...f,
-            uid: `upload-${uuidv4()}`,
-            status: f.status || "uploading", 
+            uid: `upload-${generateId()}`,
+            status: f.status || "uploading",
           };
         }
         return f;
@@ -136,12 +136,12 @@ const GalleryUploader: React.FC<GalleryUploaderProps> = ({
       });
       return Upload.LIST_IGNORE;
     }
-    const isLtMaxSize = file.size / 1024 / 1024 < maxFileSize;
+    const isLtMaxSize = file.size / 1024 / 1024 < 200;
     if (!isLtMaxSize) {
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: `Image must be smaller than ${maxFileSize}MB!`,
+        detail: `Image must be smaller than ${200}MB!`,
         life: 3000,
       });
       return Upload.LIST_IGNORE;

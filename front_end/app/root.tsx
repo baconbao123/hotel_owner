@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import "./app.css";
 import { store } from "./store";
 import { PrimeReactProvider } from "primereact/api";
-import Loading from "~/components/common/Loading";
+import Loading from "@/components/common/Loading";
 import { useSelector } from "react-redux";
 import type { RootState } from "./store";
 import { ToastContainer } from "react-toastify";

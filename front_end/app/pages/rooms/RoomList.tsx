@@ -14,10 +14,10 @@ import { Link, useParams } from "react-router";
 import { Image } from "antd";
 import noImg from "@/asset/images/no-img.png";
 import RoomForm from "./RoomForm";
-import { SkeletonTemplate } from "~/components/common/skeleton";
-import { type RootState } from "~/store";
-import Loading from "~/components/common/Loading";
-import useCrud from "~/test/crudHook";
+import { SkeletonTemplate } from "@/components/common/skeleton";
+import { type RootState } from "@/store";
+import Loading from "@/components/common/Loading";
+import useCrud from "@/test/crudHook";
 
 export default function RoomList() {
   const [selectedId, setSelectedId] = useState<string>();

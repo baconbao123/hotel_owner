@@ -63,7 +63,6 @@ export default function BookingForm({
   const { commonData } = useCommonData(["paymentmethods"]);
   const paymentMethods = commonData.paymentMethods;
 
-  // Load customers
   const loadCustomers = async (keyword = "", page = 0) => {
     const result = await dispatch(
       fetchCommonData({
@@ -85,14 +84,13 @@ export default function BookingForm({
     loadCustomers();
   }, []);
 
-  // Debounced fetch booked hours
   const fetchBookedHours = useCallback(
     async (date: string) => {
       try {
         const res = await $axios.get(
-          `/booking/${roomId}/booked-hours?date=${date}`
+          `/booking/${roomId}/booked-hours?startOfDay=${date}`
         );
-        setBookedHours(res.data.result);
+        setBookedHours(res.data.result || []);
       } catch (err) {
         console.error("Failed to fetch booked hours", err);
       }
@@ -111,7 +109,6 @@ export default function BookingForm({
     return () => clearTimeout(timeoutId);
   }, [checkInDateTime, fetchBookedHours]);
 
-  // Load data by ID
   useEffect(() => {
     if (id && open) {
       loadDataById(id).then((data) => {
@@ -132,7 +129,7 @@ export default function BookingForm({
           const isCheckInAt2PM =
             checkIn.getHours() === 14 && checkIn.getMinutes() === 0;
           const isCheckOutAtNoon =
-            checkOut.getHours() === 12 && checkIn.getMinutes() === 0;
+            checkOut.getHours() === 12 && checkOut.getMinutes() === 0;
           const isNextDay = checkOut.getDate() === checkIn.getDate() + 1;
           if (isCheckInAt2PM && isCheckOutAtNoon && isNextDay) {
             isHourlyBooking = false;
@@ -166,7 +163,6 @@ export default function BookingForm({
     }
   }, [id, open, loadDataById, customers, paymentMethods]);
 
-  // Fetch prices data
   useEffect(() => {
     const fetchData = async () => {
       const res = await $axios.get(`/booking/${roomId}/prices`);
@@ -175,7 +171,6 @@ export default function BookingForm({
     fetchData();
   }, [roomId]);
 
-  // Handle amount calculation
   useEffect(() => {
     if (priceData) {
       if (isHourly) {
@@ -191,7 +186,6 @@ export default function BookingForm({
     }
   }, [isHourly, selectedHours, priceData]);
 
-  // Handle check-in change with validation
   const handleCheckInChange = (e: any) => {
     const newDate = e.value as Date | null;
     if (!newDate) {
@@ -200,7 +194,6 @@ export default function BookingForm({
       return;
     }
 
-    // Validate if the selected time is within a booked slot
     const isBooked = bookedHours.some((booking) => {
       const bookingCheckIn = new Date(booking.checkInTime);
       const bookingCheckOut = new Date(booking.checkOutTime);
@@ -238,7 +231,6 @@ export default function BookingForm({
     }
   };
 
-  // Handle hour selection from grid
   const handleHourSelect = (hour: number) => {
     if (!checkInDateTime) return;
     const newCheckIn = new Date(checkInDateTime);
@@ -247,13 +239,7 @@ export default function BookingForm({
     const isBooked = bookedHours.some((booking) => {
       const bookingCheckIn = new Date(booking.checkInTime);
       const bookingCheckOut = new Date(booking.checkOutTime);
-      return (
-        (newCheckIn.toDateString() === bookingCheckOut.toDateString() &&
-          newCheckIn < bookingCheckOut) ||
-        (newCheckIn.toDateString() === bookingCheckIn.toDateString() &&
-          newCheckIn >= bookingCheckIn) ||
-        (newCheckIn > bookingCheckIn && newCheckIn < bookingCheckOut)
-      );
+      return newCheckIn >= bookingCheckIn && newCheckIn < bookingCheckOut;
     });
 
     if (isBooked) {
@@ -273,7 +259,6 @@ export default function BookingForm({
     }
   };
 
-  // Handle hours change
   const handleHoursChange = (e: any) => {
     const hours = e.value;
     if (checkInDateTime) {
@@ -281,7 +266,11 @@ export default function BookingForm({
       const isBooked = bookedHours.some((booking) => {
         const bookingCheckIn = new Date(booking.checkInTime);
         const bookingCheckOut = new Date(booking.checkOutTime);
-        return checkOut > bookingCheckIn && checkInDateTime < bookingCheckOut;
+        return (
+          (checkOut > bookingCheckIn && checkInDateTime < bookingCheckOut) ||
+          (checkInDateTime >= bookingCheckIn &&
+            checkInDateTime < bookingCheckOut)
+        );
       });
 
       if (isBooked) {
@@ -301,7 +290,6 @@ export default function BookingForm({
     }
   };
 
-  // Handle booking mode change
   useEffect(() => {
     if (!checkInDateTime) return;
     if (isHourly) {
@@ -320,7 +308,6 @@ export default function BookingForm({
     }
   }, [isHourly, checkInDateTime, selectedHours]);
 
-  // Filter available hours
   const availableHours = [1, 2, 3, 4, 5].filter((h) => {
     if (!checkInDateTime) return true;
     const checkOut = addHours(checkInDateTime, h);
@@ -331,37 +318,38 @@ export default function BookingForm({
     });
   });
 
-  // Generate hour slots for display
   const hourSlots = Array.from({ length: 24 }, (_, i) => i).map((hour) => {
+    const checkInDate = new Date(checkInDateTime || new Date());
+    checkInDate.setHours(hour, 0, 0, 0);
+
     const isBooked = bookedHours.some((booking) => {
       const bookingCheckIn = new Date(booking.checkInTime);
       const bookingCheckOut = new Date(booking.checkOutTime);
-      const checkInDate = new Date(checkInDateTime || new Date());
-      checkInDate.setHours(hour, 0, 0, 0);
-      return (
-        (checkInDate.toDateString() === bookingCheckOut.toDateString() &&
-          checkInDate < bookingCheckOut) ||
-        (checkInDate.toDateString() === bookingCheckIn.toDateString() &&
-          checkInDate >= bookingCheckIn) ||
-        (checkInDate > bookingCheckIn && checkInDate < bookingCheckOut)
-      );
+      return checkInDate >= bookingCheckIn && checkInDate < bookingCheckOut;
     });
+
     return {
       hour,
       isBooked,
     };
   });
 
-  // Validate date times
   const validateDateTimes = () => {
-    const now = new Date();
-    if (!checkInDateTime || !checkOutDateTime) return false;
+    if (!checkInDateTime || !checkOutDateTime) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Invalid Input",
+        detail: "Please select check-in and check-out times.",
+        life: 3000,
+      });
+      return false;
+    }
 
-    if (isBefore(checkInDateTime, now)) {
+    if (isHourly && isBefore(checkInDateTime, new Date())) {
       toast.current?.show({
         severity: "error",
         summary: "Invalid Check-In Time",
-        detail: "Check-in time cannot be in the past.",
+        detail: "Check-in time cannot be in the past for hourly booking.",
         life: 3000,
       });
       return false;
@@ -398,17 +386,10 @@ export default function BookingForm({
     return true;
   };
 
-  // Submit form
   const submit = async () => {
     setSubmitting(true);
 
     if (!validateDateTimes()) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Choose valid check-in and check-out times",
-        life: 3000,
-      });
       setSubmitting(false);
       return;
     }
@@ -600,16 +581,13 @@ export default function BookingForm({
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Available Hours
                   </label>
-                  <div className="grid grid-cols-6 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {hourSlots.map((slot) => (
                       <Button
                         key={slot.hour}
                         label={`${slot.hour}:00`}
-                        className={`p-2 text-sm ${
-                          slot.isBooked
-                            ? "bg-red-200 text-red-800 cursor-not-allowed"
-                            : "bg-green-200 text-green-800 hover:bg-green-300"
-                        }`}
+                        style={{color: "white"}}
+                        className={`p-2 text-sm`}
                         disabled={slot.isBooked}
                         onClick={() => handleHourSelect(slot.hour)}
                       />

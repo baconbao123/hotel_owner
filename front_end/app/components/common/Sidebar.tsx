@@ -5,8 +5,8 @@ import { navigation } from "../../config/menu.config";
 import logo from "../../asset/images/logo.png";
 import { useSelector } from "react-redux";
 import { Button } from "antd";
-import type { RootState } from "~/store";
-import commonHook from "~/hook/commonHook";
+import type { RootState } from "@/store";
+import commonHook from "@/hook/commonHook";
 
 export default function Sidebar() {
   const [expandedMenus, setExpandedMenus] = useState<string[]>([]);

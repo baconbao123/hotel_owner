@@ -11,8 +11,8 @@ import Swal from "sweetalert2";
 import { useParams } from "react-router";
 import BookingForm from "./BookingForm";
 import BookingDetail from "./BookingDetail";
-import useCrud from "~/test/crudHook";
-import { SkeletonTemplate } from "~/components/common/skeleton";
+import useCrud from "@/test/crudHook";
+import { SkeletonTemplate } from "@/components/common/skeleton";
 import { parseISO, format } from "date-fns";
 
 export default function RoomList() {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useDispatch } from "react-redux";
 import { disableLoading, setLoading } from "../store/slice/commonSlice";
-import $axios from "~/axios";
+import $axios from "@/axios";
 import { ApiResponse } from "./apiResponse.type";
 
 interface ErrorResponse {

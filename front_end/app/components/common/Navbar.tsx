@@ -9,18 +9,18 @@ import {
 import { Dialog } from "primereact/dialog";
 import { Link, useSearchParams } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
-import type { RootState } from "~/store";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router";
 import { Button } from "primereact/button";
-import $axios from "~/axios";
-import { setUser, type UserLogin } from "~/store/slice/userDataSlice";
-import { disableLoading, setLoading } from "~/store/slice/commonSlice";
-import { setPermissions } from "~/store/slice/permissionSlice";
 import { Sidebar } from "primereact/sidebar";
 import { toast } from "react-toastify";
 import { InputText } from "primereact/inputtext";
 import ImageUploader from "../../utils/ImageUploader";
+import type { RootState } from "@/store";
+import { disableLoading, setLoading } from "@/store/slice/commonSlice";
+import $axios from "@/axios";
+import { setUser, type UserLogin } from "@/store/slice/userDataSlice";
+import { setPermissions } from "@/store/slice/permissionSlice";
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);

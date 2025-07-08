@@ -5,10 +5,10 @@ import { Button } from "primereact/button";
 import { Checkbox } from "primereact/checkbox";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
-import $axios from "~/axios";
+import $axios from "@/axios";
 import Cookies from "js-cookie";
-import { useAppDispatch } from "~/store";
-import { disableLoading, setLoading } from "~/store/slice/commonSlice";
+import { useAppDispatch } from "@/store";
+import { disableLoading, setLoading } from "@/store/slice/commonSlice";
 
 import { Password } from "primereact/password";
 import { toast } from "react-toastify";

@@ -7,8 +7,8 @@ import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import type { Nullable } from "primereact/ts-helpers";
 import { addDays, addHours, format, isBefore, set, startOfDay } from "date-fns";
-import { useAppDispatch } from "~/store";
-import { fetchCommonData, type CommonData } from "~/test/commonDataSlice";
+import { useAppDispatch } from "@/store";
+import { fetchCommonData, type CommonData } from "@/test/commonDataSlice";
 
 interface Props {
   roomId: any;

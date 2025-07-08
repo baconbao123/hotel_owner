@@ -4,7 +4,7 @@ import {
   type PayloadAction,
 } from "@reduxjs/toolkit";
 import type { RootState } from "../store";
-import $axios from "~/axios";
+import $axios from "@/axios";
 
 export interface CommonDataResponse {
   facilityTypes?: any[];

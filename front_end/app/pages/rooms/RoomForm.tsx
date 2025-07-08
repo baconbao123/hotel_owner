@@ -7,9 +7,9 @@ import { InputSwitch } from "primereact/inputswitch";
 import { Dropdown } from "primereact/dropdown";
 import { MultiSelect } from "primereact/multiselect";
 import type { RcFile } from "antd/es/upload";
-// import GalleryUploader from "~/utils/GalleryUploader";
-import ImageUploader from "~/utils/ImageUploader";
+import GalleryUploader from "~/utils/GalleryUploader";
 import { useCommonData } from "~/test/useCommonData";
+import ImageUploader from "~/utils/ImageUploader";
 
 interface Props {
   hotelId: any;
@@ -47,7 +47,7 @@ export default function RoomForm({
   const [selectedFacilies, setSelectedFacilies] = useState<number[]>([]);
   const [status, setStatus] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [roomAvatar, setroomAvatar] = useState<string | null>(null);
   const [keepAvatar, setKeepAvatar] = useState("true");
   const [existingImages, setExistingImages] = useState<any[]>([]);
 
@@ -71,7 +71,6 @@ export default function RoomForm({
 
   const submit = async () => {
     setSubmitting(true);
-
     const formData = new FormData();
 
     // Basic info
@@ -87,11 +86,13 @@ export default function RoomForm({
     formData.append("limitPerson", limit);
 
     // Avatar
-    formData.append("avatar.keepAvatar", keepAvatar);
+    formData.append("keepAvatar", keepAvatar);
     if (selectedFile) {
-      formData.append("avatar.avatarUrl", selectedFile, selectedFile.name);
-    } else if (avatarUrl) {
-      formData.append("avatar.existingAvatarUrl", avatarUrl);
+      formData.append("roomAvatar", selectedFile, selectedFile.name);
+      formData.append("keepAvatar", "false"); // Upload mới, không giữ avatar cũ
+    } else if (roomAvatar) {
+      formData.append("existingroomAvatar", roomAvatar);
+      formData.append("keepAvatar", "true"); // Giữ avatar cũ
     }
 
     // Images
@@ -126,7 +127,7 @@ export default function RoomForm({
         toast.current?.show({
           severity: "success",
           summary: "Success",
-          detail: "Hotel updated successfully",
+          detail: "Room updated successfully",
           life: 3000,
         });
       } else {
@@ -134,7 +135,7 @@ export default function RoomForm({
         toast.current?.show({
           severity: "success",
           summary: "Success",
-          detail: "Hotel created successfully",
+          detail: "Room created successfully",
           life: 3000,
         });
       }
@@ -143,7 +144,7 @@ export default function RoomForm({
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: err.response?.data?.message || "Failed to save hotel",
+        detail: err.response?.data?.message || "Failed to save room",
         life: 3000,
       });
     } finally {
@@ -156,36 +157,30 @@ export default function RoomForm({
     if (id && open) {
       loadDataById(id)
         .then(async (data) => {
-          const result = data.result || data;
-          console.log("Hotel data from loadDataById:", result);
+          const result = data;
 
+          // Map basic info
           setName(result.name || "");
           setDescription(result.description || "");
+          setRoomNumber(result.roomNumber?.toString() || "");
+          setRoomArea(result.roomArea?.toString() || "");
+          setPriceHour(result.priceHours?.toString() || "");
+          setPriceNight(result.priceNight?.toString() || "");
+          setLmit(result.limitPerson?.toString() || "");
           setStatus(result.status ?? true);
 
-          // Set roomType types
+          // Set roomType
           if (result.roomType && roomTypes) {
-            const roomType: any =
-              roomTypes.find((r: any) => r.id === roomType) || "";
-            setSelectedType(roomType);
+            const roomType =
+              roomTypes.find((r: any) => r.name === result.roomType) || null;
+            setSelectedType(roomType ? roomType.id : null);
           }
 
           // Set facilities
-          const validHotelFacilities = Array.isArray(hotelFacilities)
-            ? hotelFacilities.filter(
-                (facility: any) =>
-                  facility &&
-                  typeof facility.id === "number" &&
-                  !isNaN(facility.id) &&
-                  facility.name
-              )
-            : [];
-          if (result.facilities && validHotelFacilities.length) {
-            const selectedFacilityIds = validHotelFacilities
-              .filter((option: any) =>
-                result.facilities.some(
-                  (facility: any) => facility.id === option.id
-                )
+          if (result.roomFacilities && Array.isArray(hotelFacilities)) {
+            const selectedFacilityIds = result.roomFacilities
+              .filter((facility: any) =>
+                hotelFacilities.some((option: any) => option.id === facility.id)
               )
               .map((facility: any) => facility.id)
               .filter((id: number) => typeof id === "number" && !isNaN(id));
@@ -195,31 +190,21 @@ export default function RoomForm({
           }
 
           // Set avatar
-          if (result.avatarUrl) {
-            setAvatarUrl(result.avatarUrl);
+          if (result.roomAvatar) {
+            setroomAvatar(result.roomAvatar);
             setKeepAvatar("true");
-            console.log(
-              "Avatar URL:",
-              `${import.meta.env.VITE_REACT_APP_BACK_END_UPLOAD_HOTEL}/${
-                result.avatarUrl
-              }`
-            );
           } else {
-            setAvatarUrl(null);
+            setroomAvatar(null);
             setKeepAvatar("false");
-            console.log("No avatar URL provided");
           }
 
           // Set gallery images
           const images = result.images
             ? result.images
-                .filter((img: any) => {
-                  if (!img?.imagesUrl || typeof img.imagesUrl !== "string") {
-                    console.warn("Invalid image data:", img);
-                    return false;
-                  }
-                  return true;
-                })
+                .filter(
+                  (img: any) =>
+                    img?.imagesUrl && typeof img.imagesUrl === "string"
+                )
                 .map((img: any) => ({
                   id: img.id,
                   imagesUrl: img.imagesUrl,
@@ -228,23 +213,28 @@ export default function RoomForm({
           setExistingImages(images);
         })
         .catch((err) => {
-          console.error("Error loading hotel data:", err);
+          console.error("Error loading room data:", err);
           toast.current?.show({
             severity: "error",
             summary: "Error",
-            detail: err.response?.data?.message || "Failed to load hotel data",
+            detail: err.response?.data?.message || "Failed to load room data",
             life: 3000,
           });
         });
     } else {
       setName("");
       setDescription("");
-      setSelectedFacilies([]);
+      setRoomNumber("");
+      setRoomArea("");
+      setPriceHour("");
+      setPriceNight("");
+      setLmit("");
       setStatus(true);
       setSelectedType(null);
+      setSelectedFacilies([]);
       setSelectedImgsFile([]);
       setSelectedFile(null);
-      setAvatarUrl(null);
+      setroomAvatar(null);
       setKeepAvatar("false");
       setExistingImages([]);
     }
@@ -306,15 +296,14 @@ export default function RoomForm({
                     </label>
                     <ImageUploader
                       initialImageUrl={
-                        avatarUrl
+                        roomAvatar
                           ? `${
                               import.meta.env
                                 .VITE_REACT_APP_BACK_END_UPLOAD_HOTEL
-                            }/${avatarUrl}`
+                            }/${roomAvatar}`
                           : undefined
                       }
                       onFileChange={(file) => setSelectedFile(file)}
-                      maxFileSize={100}
                       disabled={submitting}
                     />
                     {getError("avatar") && (
@@ -336,12 +325,11 @@ export default function RoomForm({
                     >
                       Images (Up to 3)
                     </label>
-                    {/* <GalleryUploader
+                    <GalleryUploader
                       onFilesChange={(files) => {
                         setSelectedImgsFile(files);
                       }}
                       onRemoveExistingImage={handleRemoveExistingImage}
-                      maxFileSize={6}
                       disabled={submitting}
                       initialImageUrls={existingImages.map(
                         (img) =>
@@ -350,7 +338,7 @@ export default function RoomForm({
                           }/${img.imagesUrl}`
                       )}
                       maxCount={3}
-                    /> */}
+                    />
                     {getError("images") && (
                       <small className="text-red-500 text-xs mt-1">
                         {getError("images")}

@@ -11,7 +11,6 @@ type RcFile = import("antd/es/upload").RcFile;
 interface ImageUploaderProp {
   initialImageUrl?: string;
   onFileChange: (file: RcFile | null) => void;
-  maxFileSize?: number;
   disabled?: boolean;
 }
 
@@ -26,16 +25,14 @@ const getBase64 = (file: FileType): Promise<string> =>
 const ImageUploader: React.FC<ImageUploaderProp> = ({
   initialImageUrl,
   onFileChange,
-  maxFileSize = 2,
   disabled = false,
 }) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const toast = useRef<PrimeToast>(null);
-  const hasUploadedFile = useRef(false); // Track if a file has been uploaded
+  const hasUploadedFile = useRef(false);
 
-  // Sync fileList with initialImageUrl only when no file has been uploaded
   useEffect(() => {
     console.log("ImageUploader: initialImageUrl =", initialImageUrl);
     if (initialImageUrl && !hasUploadedFile.current) {
@@ -106,12 +103,12 @@ const ImageUploader: React.FC<ImageUploaderProp> = ({
       });
       return false;
     }
-    const isLtMaxSize = file.size / 1024 / 1024 < maxFileSize;
+    const isLtMaxSize = file.size / 1024 / 1024 < 100;
     if (!isLtMaxSize) {
       toast.current?.show({
         severity: "error",
         summary: "Error",
-        detail: `Image must be smaller than ${maxFileSize}MB!`,
+        detail: `Image must be smaller than ${100}MB!`,
         life: 3000,
       });
       return false;

@@ -1,11 +1,7 @@
 import { Outlet } from "react-router";
-import { useEffect } from "react";
-import Sidebar from "~/components/common/Sidebar";
-import Navbar from "~/components/common/Navbar";
-import { type RootState } from "~/store";
-// import { useFetchPermissions } from "@/hooks/useFetchPermissions";
-import { useSelector } from "react-redux";
-import "~/asset/styles/globals.scss";
+import Sidebar from "@/components/common/Sidebar";
+import Navbar from "@/components/common/Navbar";
+import "@/asset/styles/globals.scss";
 
 export default function RootLayout() {
   // useFetchPermissions();

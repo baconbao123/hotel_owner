@@ -1,18 +1,21 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Button } from "primereact/button";
-import { Toast } from "primereact/toast";
 import { InputSwitch } from "primereact/inputswitch";
-import type { RcFile } from "antd/es/upload";
-import { useCommonData } from "~/test/useCommonData";
-import { useAppDispatch } from "~/store";
-import { fetchCommonData, type CommonData } from "~/test/commonDataSlice";
-import ImageUploader from "~/utils/ImageUploader";
-import { MultiSelect } from "primereact/multiselect";
-import { Dropdown } from "primereact/dropdown";
 import $axios from "~/axios";
+import { Dropdown } from "primereact/dropdown";
+import { MultiSelect } from "primereact/multiselect";
+import ImageUploader from "~/utils/ImageUploader";
+import GalleryUploader from "~/utils/GalleryUploader";
 import { FileUpload } from "primereact/fileupload";
+
+import type { RcFile } from "antd/es/upload";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "~/store";
+import { toast } from "react-toastify";
+import { useCommonData } from "~/test/useCommonData";
+import { fetchCommonData, type CommonData } from "~/test/commonDataSlice";
 
 interface Props {
   id?: string;
@@ -65,7 +68,6 @@ export default function HotelForm({
   const [hotelNote, setHotelNote] = useState("");
 
   const [streetNumber, setStreetNumber] = useState("");
-  const toast = useRef<Toast>(null);
   const [documents, setDocuments] = useState<any>([
     {
       documentId: null,
@@ -73,12 +75,12 @@ export default function HotelForm({
       typeId: null,
       documentUrl: null,
       existingDocumentUrl: null,
+      keepDocument: true,
     },
   ]);
   const [policyId, setPolicyId] = useState("0");
   const [policyName, setPolicyName] = useState("");
   const [policyDescription, setPolicyDescription] = useState("");
-
   const { commonData } = useCommonData([
     "provinces",
     "hoteltypes",
@@ -90,6 +92,8 @@ export default function HotelForm({
   const hotelTypes = commonData.hotelTypes;
   const hotelFacilities = commonData.hotelFacilities;
   const hotelDocuments = commonData.documentTypes;
+
+  const dispatch: AppDispatch = useDispatch();
 
   const header = mode === "edit" ? "EDIT" : "ADD";
 
@@ -118,6 +122,9 @@ export default function HotelForm({
   const updateDocument = (index: any, field: any, value: any) => {
     const updatedDocuments = [...documents];
     updatedDocuments[index][field] = value;
+    if (field === "keepDocument" && value === true) {
+      updatedDocuments[index].documentUrl = null;
+    }
     setDocuments(updatedDocuments);
   };
 
@@ -150,10 +157,11 @@ export default function HotelForm({
     formData.append("noteHotel", hotelNote || "");
 
     // Avatar
+    // Avatar
     formData.append("avatar.keepAvatar", keepAvatar);
-    if (selectedFile) {
+    if (keepAvatar === "false" && selectedFile) {
       formData.append("avatar.avatarUrl", selectedFile, selectedFile.name);
-    } else if (avatarUrl) {
+    } else if (keepAvatar === "true" && avatarUrl) {
       formData.append("avatar.existingAvatarUrl", avatarUrl);
     }
 
@@ -195,7 +203,7 @@ export default function HotelForm({
     });
 
     // Documents
-    documents.forEach((doc: any, index: number) => {
+    documents.forEach((doc: any, index: any) => {
       if (doc.documentName && doc.typeId !== null && doc.typeId !== undefined) {
         if (doc.documentId) {
           formData.append(
@@ -206,10 +214,16 @@ export default function HotelForm({
         formData.append(`documents[${index}].documentName`, doc.documentName);
         formData.append(`documents[${index}].typeId`, doc.typeId.toString());
         formData.append(
-          `documents[${index}].keepDocumentUrl`,
-          doc.keepDocumentUrl || true
+          `documents[${index}].keepDocument`,
+          doc.keepDocument.toString()
         );
-        if (!doc.keepDocumentUrl && doc.documentUrl instanceof File) {
+
+        if (doc.keepDocument && doc.existingDocumentUrl) {
+          formData.append(
+            `documents[${index}].existingDocumentUrl`,
+            doc.existingDocumentUrl
+          );
+        } else if (doc.documentUrl instanceof File) {
           formData.append(
             `documents[${index}].documentUrl`,
             doc.documentUrl,
@@ -231,28 +245,19 @@ export default function HotelForm({
     try {
       if (id) {
         await updateItem(id, formData);
-        toast.current?.show({
-          severity: "success",
-          summary: "Success",
-          detail: "Hotel updated successfully",
-          life: 3000,
+        toast.success("Hotel updated successfully", {
+          autoClose: 3000,
         });
       } else {
         await createItem(formData);
-        toast.current?.show({
-          severity: "success",
-          summary: "Success",
-          detail: "Hotel created successfully",
-          life: 3000,
+        toast.success("Hotel created successfully", {
+          autoClose: 3000,
         });
       }
       onClose();
     } catch (err: any) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: err.response?.data?.message || "Failed to save hotel",
-        life: 3000,
+      toast.error(err.response?.data?.message || "Failed to save hotel", {
+        autoClose: 3000,
       });
     } finally {
       setSubmitting(false);
@@ -265,20 +270,20 @@ export default function HotelForm({
       loadDataById(id)
         .then(async (data) => {
           setHotelData(data);
-          // const result = data.result || data;
+          const result = data.result || data;
 
           // Set basic information
-          setName(data.name || "");
-          setDescription(data.description || "");
-          setStatus(data.status ?? true);
-          setNote(data.note || "");
-          setStreetNumber(data.streetNumber || "");
+          setName(result.name || "");
+          setDescription(result.description || "");
+          setStatus(result.status ?? true);
+          setNote(result.note || "");
+          setStreetNumber(result.streetNumber || "");
 
           // Set hotel types
-          if (data.typeHotels && hotelTypes) {
+          if (result.typeHotels && hotelTypes) {
             const selectedTypeIds = hotelTypes
               .filter((option: any) =>
-                data.typeHotels.some((type: any) => type?.id === option.id)
+                result.typeHotels.some((type: any) => type?.id === option.id)
               )
               .map((type: any) => type.id)
               .filter((id: number) => typeof id === "number" && !isNaN(id));
@@ -297,10 +302,10 @@ export default function HotelForm({
                   facility.name
               )
             : [];
-          if (data.facilities && validHotelFacilities.length) {
+          if (result.facilities && validHotelFacilities.length) {
             const selectedFacilityIds = validHotelFacilities
               .filter((option: any) =>
-                data.facilities.some(
+                result.facilities.some(
                   (facility: any) => facility.id === option.id
                 )
               )
@@ -311,18 +316,18 @@ export default function HotelForm({
             setSelectedFacilies([]);
           }
 
-          setHotelNote(data.hotelNote);
+          setHotelNote(result.hotelNote);
 
-          // Set Documents
-          if (data.documents && hotelDocuments) {
+          // Set documents
+          if (result.documents && hotelDocuments) {
             setDocuments(
-              data.documents?.map((doc: any) => ({
+              result.documents?.map((doc: any) => ({
                 documentId: doc.documentId,
                 documentName: doc.documentName,
                 typeId: doc.typeId,
                 documentUrl: null,
                 existingDocumentUrl: doc.documentUrl,
-                keepDocument: !!doc.documentUrl,
+                keepDocument: true,
               })) || [
                 {
                   documentId: null,
@@ -330,7 +335,7 @@ export default function HotelForm({
                   typeId: null,
                   documentUrl: null,
                   existingDocumentUrl: null,
-                  keepDocument: false,
+                  keepDocument: true,
                 },
               ]
             );
@@ -342,16 +347,16 @@ export default function HotelForm({
                 typeId: null,
                 documentUrl: null,
                 existingDocumentUrl: null,
-                keepDocument: false,
+                keepDocument: true,
               },
             ]);
           }
 
           // Set policies
-          if (data.policies) {
-            setPolicyId(data.policies.id?.toString() || "0");
-            setPolicyName(data.policies.policyName || "");
-            setPolicyDescription(data.policies.policyDescription || "");
+          if (result.policies) {
+            setPolicyId(result.policies.id?.toString() || "0");
+            setPolicyName(result.policies.policyName || "");
+            setPolicyDescription(result.policies.policyDescription || "");
           } else {
             setPolicyId("0");
             setPolicyName("");
@@ -359,24 +364,19 @@ export default function HotelForm({
           }
 
           // Set avatar
-          if (data.avatarUrl) {
-            setAvatarUrl(data.avatarUrl);
+          if (result.avatarUrl) {
+            setAvatarUrl(result.avatarUrl);
             setKeepAvatar("true");
-            console.log(
-              "Avatar URL:",
-              `${import.meta.env.VITE_REACT_APP_BACK_END_UPLOAD_HOTEL}/${
-                data.avatarUrl
-              }`
-            );
+            setSelectedFile(null);
           } else {
             setAvatarUrl(null);
             setKeepAvatar("false");
-            console.log("No avatar URL provided");
+            setSelectedFile(null);
           }
 
           // Set gallery images
-          const images = data.images
-            ? data.images
+          const images = result.images
+            ? result.images
                 .filter((img: any) => {
                   if (!img?.imagesUrl || typeof img.imagesUrl !== "string") {
                     console.warn("Invalid image data:", img);
@@ -395,7 +395,7 @@ export default function HotelForm({
           try {
             const province =
               provinces?.find(
-                (p: LocalResponse) => p.code === data.provinceCode
+                (p: LocalResponse) => p.code === result.provinceCode
               ) || null;
             setSelectedProvince(province);
 
@@ -409,7 +409,7 @@ export default function HotelForm({
               setDistrictData(districts);
               district =
                 districts.find(
-                  (d: LocalResponse) => d.code === data.districtCode
+                  (d: LocalResponse) => d.code === result.districtCode
                 ) || null;
               setSelectedDistrict(district);
             } else {
@@ -426,7 +426,7 @@ export default function HotelForm({
               wards = wardRes.data.result || [];
               setWardData(wards);
               ward =
-                wards.find((w: LocalResponse) => w.code === data.wardCode) ||
+                wards.find((w: LocalResponse) => w.code === result.wardCode) ||
                 null;
               setSelectedWard(ward);
             } else {
@@ -442,7 +442,8 @@ export default function HotelForm({
               );
               streets = streetRes.data.result || [];
               setStreetData(streets);
-              street = streets.find((s: any) => s.id === data.streetId) || null;
+              street =
+                streets.find((s: any) => s.id === result.streetId) || null;
               setSelectedStreet(street);
             } else {
               setStreetData([]);
@@ -450,13 +451,12 @@ export default function HotelForm({
             }
           } catch (error: any) {
             console.error("Address fetch error:", error);
-            toast.current?.show({
-              severity: "error",
-              summary: "Error",
-              detail:
-                error.response?.data?.message || "Failed to load address data",
-              life: 3000,
-            });
+            toast.error(
+              error.response?.data?.message || "Failed to load address data",
+              {
+                autoClose: 3000,
+              }
+            );
             setDistrictData([]);
             setSelectedDistrict(null);
             setWardData([]);
@@ -467,14 +467,15 @@ export default function HotelForm({
         })
         .catch((err) => {
           console.error("Error loading hotel data:", err);
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: err.response?.data?.message || "Failed to load hotel data",
-            life: 3000,
-          });
+          toast.error(
+            err.response?.data?.message || "Failed to load districts",
+            {
+              autoClose: 3000,
+            }
+          );
         });
     } else {
+      // Reset form for create mode
       setName("");
       setDescription("");
       setSelectedFacilies([]);
@@ -484,6 +485,7 @@ export default function HotelForm({
       setSelectedFile(null);
       setAvatarUrl(null);
       setKeepAvatar("false");
+
       setExistingImages([]);
       setSelectedProvince(null);
       setSelectedDistrict(null);
@@ -531,12 +533,12 @@ export default function HotelForm({
             }
           }
         } catch (error: any) {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.response?.data?.message || "Failed to load districts",
-            life: 3000,
-          });
+          toast.error(
+            error.response?.data?.message || "Failed to load districts",
+            {
+              autoClose: 3000,
+            }
+          );
         }
       };
       fetchDistricts();
@@ -567,11 +569,8 @@ export default function HotelForm({
             setSelectedWard(ward);
           }
         } catch (error: any) {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.response?.data?.message || "Failed to load wards",
-            life: 3000,
+          toast.error(error.response?.data?.message || "Failed to load wards", {
+            autoClose: 3000,
           });
         }
       };
@@ -600,11 +599,12 @@ export default function HotelForm({
             setSelectedStreet(street);
           }
         } catch (error: any) {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: error.response?.data?.message || "Failed to load streets",
-          });
+          toast.error(
+            error.response?.data?.message || "Failed to load streets",
+            {
+              autoClose: 3000,
+            }
+          );
         }
       };
       fetchStreets();
@@ -616,7 +616,6 @@ export default function HotelForm({
 
   return (
     <div>
-      <Toast ref={toast} />
       <Dialog
         visible={open}
         onHide={onClose}
@@ -634,7 +633,6 @@ export default function HotelForm({
             <Button
               label="Save"
               onClick={submit}
-              severity="success"
               disabled={submitting}
               loading={submitting}
               className="btn_submit"
@@ -655,77 +653,64 @@ export default function HotelForm({
               </h3>
             </div>
 
-            <div className="col-span-12 md:col-span-12">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-6">
-                  <h4 className="text-md font-semibold text-gray-800 mb-2">
-                    Hotel Avatar
-                  </h4>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <label
-                      htmlFor="avatar"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Upload 1 image
-                    </label>
-                    <ImageUploader
-                      initialImageUrl={
-                        avatarUrl
-                          ? `${
-                              import.meta.env
-                                .VITE_REACT_APP_BACK_END_UPLOAD_HOTEL
-                            }/${avatarUrl}`
-                          : undefined
-                      }
-                      onFileChange={(file) => setSelectedFile(file)}
-                      maxFileSize={100}
-                      disabled={submitting}
-                    />
-                    {getError("avatar") && (
-                      <small className="text-red-500 text-xs mt-1">
-                        {getError("avatar")}
-                      </small>
-                    )}
-                  </div>
-                </div>
+            <div className="col-span-12 md:col-span-6">
+              <h4 className="text-md font-semibold text-gray-800 mb-2">
+                Room Avatar
+              </h4>
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <label
+                  htmlFor="avatar"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Upload 1 image
+                </label>
+                <ImageUploader
+                  initialImageUrl={
+                    mode === "create" || !avatarUrl
+                      ? undefined
+                      : `${
+                          import.meta.env.VITE_REACT_APP_BACK_END_UPLOAD_HOTEL
+                        }/${avatarUrl}`
+                  }
+                  onFileChange={(file) => setSelectedFile(file)}
+                  disabled={submitting}
+                />
+                {getError("avatar") && (
+                  <small className="text-red-500 text-xs mt-1">
+                    {getError("avatar")}
+                  </small>
+                )}
+              </div>
+            </div>
 
-                <div className="col-span-12 md:col-span-6">
-                  <h4 className="text-md font-semibold text-gray-800 mb-2">
-                    Gallery Images
-                  </h4>
-                  <div className="border rounded-lg p-4 bg-gray-50">
-                    <label
-                      htmlFor="images"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Images (Up to 3)
-                    </label>
-                    {/* <GalleryUploader
-                      onFilesChange={(files) => {
-                        console.log(
-                          "HotelForm: Updated selectedImgsFile =",
-                          files
-                        );
-                        setSelectedImgsFile(files);
-                      }}
-                      onRemoveExistingImage={handleRemoveExistingImage}
-                      maxFileSize={6}
-                      disabled={submitting}
-                      initialImageUrls={existingImages.map(
-                        (img) =>
-                          `${
-                            import.meta.env.VITE_REACT_APP_BACK_END_UPLOAD_HOTEL
-                          }/${img.imagesUrl}`
-                      )}
-                      maxCount={3}
-                    /> */}
-                    {getError("images") && (
-                      <small className="text-red-500 text-xs mt-1">
-                        {getError("images")}
-                      </small>
-                    )}
-                  </div>
-                </div>
+            <div className="col-span-12 md:col-span-6">
+              <h4 className="text-md font-semibold text-gray-800 mb-2">
+                Hotel Gallery
+              </h4>
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <label
+                  htmlFor="avatar"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Image (Up to 3)
+                </label>
+                <GalleryUploader
+                  initialImageUrls={existingImages.map(
+                    (img) =>
+                      `${
+                        import.meta.env.VITE_REACT_APP_BACK_END_UPLOAD_HOTEL
+                      }/${img.imagesUrl}`
+                  )}
+                  onFilesChange={(files) => setSelectedImgsFile(files)}
+                  onRemoveExistingImage={handleRemoveExistingImage}
+                  disabled={submitting}
+                  maxCount={3}
+                />
+                {getError("avatar.avatarUrl") && (
+                  <small className="text-red-500 text-xs mt-1">
+                    {getError("avatar.avatarUrl")}
+                  </small>
+                )}
               </div>
             </div>
 
@@ -843,7 +828,7 @@ export default function HotelForm({
                 </div>
               </div>
 
-              {/* Owner + Hotel note */}
+              {/*  Hotel note */}
               <div className="mt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Hotel Note */}
@@ -860,12 +845,12 @@ export default function HotelForm({
                       onChange={(e) => setHotelNote(e.target.value)}
                       disabled={submitting}
                       className={`w-full p-2 border rounded-lg ${
-                        getError("name") ? "p-invalid" : ""
+                        getError("hotelNote") ? "p-invalid" : ""
                       }`}
                     />
-                    {getError("name") && (
+                    {getError("hotelNote") && (
                       <small className="text-red-500 text-xs mt-1">
-                        {getError("name")}
+                        {getError("hotelNote")}
                       </small>
                     )}
                   </div>
@@ -902,12 +887,12 @@ export default function HotelForm({
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline"
                             onError={() =>
-                              toast.current?.show({
-                                severity: "error",
-                                summary: "Error",
-                                detail: `Failed to load document: ${doc.documentName}`,
-                                life: 3000,
-                              })
+                              toast.error(
+                                `Failed to load document: ${doc.documentName}`,
+                                {
+                                  autoClose: 3000,
+                                }
+                              )
                             }
                           >
                             {doc.documentName} ({doc.typeName})
@@ -943,11 +928,6 @@ export default function HotelForm({
                           getError(`documents`) ? "p-invalid" : ""
                         }`}
                       />
-                      {getError(`documents`) && (
-                        <small className="text-red-500 text-xs mt-1">
-                          {getError(`documents`)}
-                        </small>
-                      )}
                     </div>
                     <div>
                       <label
@@ -971,126 +951,98 @@ export default function HotelForm({
                         }`}
                         disabled={submitting}
                       />
-                      {getError(`documents`) && (
-                        <small className="text-red-500 text-xs mt-1">
-                          {getError(`documents`)}
-                        </small>
-                      )}
                     </div>
-                    {doc.documentId && (
-                      <div className="flex items-center gap-4">
-                        <label
-                          htmlFor={`keepDocumentUrl-${index}`}
-                          className="text-sm font-medium text-gray-700"
-                        >
-                          Keep Existing Document
-                        </label>
-                        <InputSwitch
-                          id={`keepDocumentUrl-${index}`}
-                          checked={doc.keepDocumentUrl}
-                          onChange={(e) =>
-                            updateDocument(index, "keepDocumentUrl", e.value)
-                          }
-                          disabled={submitting}
-                        />
-                      </div>
-                    )}
                     <div>
                       <label
-                        htmlFor={`documentUpload-${index}`}
+                        htmlFor={`keepDocument-${index}`}
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Document Upload{" "}
-                        <span className="text-red-500">
-                          {doc.documentId ? "" : "*"}
-                        </span>
+                        Keep Existing Document
                       </label>
-                      <div className="flex items-center gap-4 flex-wrap">
-                        <FileUpload
-                          mode="basic"
-                          name={`documentUpload-${index}`}
-                          maxFileSize={1000000}
-                          accept="application/pdf"
-                          onSelect={(e) => {
-                            updateDocument(index, "documentUrl", e.files[0]);
-                            updateDocument(index, "keepDocumentUrl", false);
-                          }}
-                          disabled={submitting}
-                          className="w-auto"
-                          chooseLabel={
-                            doc.documentUrl ? "Replace File" : "Choose File"
-                          }
-                        />
-                        {getError("documents") && (
-                          <small className="text-red-500 text-xs mt-1">
-                            {getError("documents")}
-                          </small>
-                        )}
-
-                        {/* Preview for existing document in update mode */}
-                        {doc.documentId && doc.existingDocumentUrl && (
-                          <div className="flex items-center gap-2 text-sm text-blue-500">
-                            <i
-                              className="pi pi-file-pdf"
-                              style={{ fontSize: "1rem" }}
-                            ></i>
-                            <a
-                              href={`${
-                                import.meta.env
-                                  .VITE_REACT_APP_BACK_END_UPLOAD_DOCUMENT
-                              }/${doc.existingDocumentUrl}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:underline truncate max-w-[200px]"
-                              title={doc.existingDocumentUrl}
-                            >
-                              View Existing Document
-                            </a>
-                          </div>
-                        )}
-                        {doc.documentUrl && !doc.keepDocumentUrl && (
-                          <div className="flex items-center gap-2 text-sm text-blue-500">
-                            <i
-                              className="pi pi-file-pdf"
-                              style={{ fontSize: "1rem" }}
-                            ></i>
-                            <span className="truncate max-w-[200px]">
-                              {doc.documentUrl.name}
-                            </span>
-                            {/* Preview link for newly uploaded file */}
-                            {doc.documentUrl instanceof File && (
-                              <a
-                                href={URL.createObjectURL(doc.documentUrl)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                              >
-                                Preview
-                              </a>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateDocument(index, "documentUrl", null)
-                              }
-                              className="text-red-500 hover:text-red-700"
-                              disabled={submitting}
-                              title="Remove File"
-                            >
+                      <InputSwitch
+                        id={`keepDocument-${index}`}
+                        checked={doc.keepDocument}
+                        onChange={(e) =>
+                          updateDocument(index, "keepDocument", e.value)
+                        }
+                        disabled={submitting || !doc.existingDocumentUrl}
+                      />
+                    </div>
+                    {!doc.keepDocument && (
+                      <div>
+                        <label
+                          htmlFor={`documentUpload-${index}`}
+                          className="block text-sm font-medium text-gray-700 mb-1"
+                        >
+                          Document Upload{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
+                        <div className="flex items-center gap-4 flex-wrap">
+                          <FileUpload
+                            mode="basic"
+                            name={`documentUpload-${index}`}
+                            maxFileSize={1000000}
+                            accept="application/pdf"
+                            onSelect={(e) =>
+                              updateDocument(index, "documentUrl", e.files[0])
+                            }
+                            disabled={submitting}
+                            className="w-auto"
+                            chooseLabel={
+                              doc.documentUrl ? "Replace File" : "Choose File"
+                            }
+                          />
+                          {doc.documentUrl && (
+                            <div className="flex items-center gap-2 text-sm text-blue-500">
                               <i
-                                className="pi pi-trash"
+                                className="pi pi-file-pdf"
                                 style={{ fontSize: "1rem" }}
                               ></i>
-                            </button>
-                          </div>
-                        )}
+                              <span
+                                className="truncate max-w-[200px]"
+                                title={doc.documentUrl.name}
+                              >
+                                {doc.documentUrl.name}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateDocument(index, "documentUrl", null)
+                                }
+                                className="text-red-500 hover:text-red-700"
+                                disabled={submitting}
+                                title="Remove File"
+                              >
+                                <i
+                                  className="pi pi-trash"
+                                  style={{ fontSize: "1rem" }}
+                                ></i>
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {getError(`documentUpload-${index}`) && (
-                        <small className="text-red-500 text-xs mt-1">
-                          {getError(`documentUpload-${index}`)}
-                        </small>
-                      )}
-                    </div>
+                    )}
+                    {doc.keepDocument && doc.existingDocumentUrl && (
+                      <div className="flex items-center gap-2 text-sm text-blue-500">
+                        <i
+                          className="pi pi-file-pdf"
+                          style={{ fontSize: "1rem" }}
+                        ></i>
+                        <a
+                          href={`${
+                            import.meta.env
+                              .VITE_REACT_APP_BACK_END_UPLOAD_DOCUMENT
+                          }/${doc.existingDocumentUrl}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline truncate max-w-[200px]"
+                          title={doc.existingDocumentUrl}
+                        >
+                          View Current File
+                        </a>
+                      </div>
+                    )}
                   </div>
                   {documents.length > 1 && (
                     <button
@@ -1134,12 +1086,12 @@ export default function HotelForm({
                       onChange={(e) => setPolicyName(e.target.value)}
                       disabled={submitting}
                       className={`w-full p-2 border rounded-lg ${
-                        getError("policyName") ? "p-invalid" : ""
+                        getError("policy") ? "p-invalid" : ""
                       }`}
                     />
-                    {getError("policyName") && (
+                    {getError("policy") && (
                       <small className="text-red-500 text-xs mt-1">
-                        {getError("policyName")}
+                        {getError("policy")}
                       </small>
                     )}
                   </div>
@@ -1156,12 +1108,12 @@ export default function HotelForm({
                       onChange={(e) => setPolicyDescription(e.target.value)}
                       disabled={submitting}
                       className={`w-full p-2 border rounded-lg ${
-                        getError("policyDescription") ? "p-invalid" : ""
+                        getError("policy") ? "p-invalid" : ""
                       }`}
                     />
-                    {getError("policyDescription") && (
+                    {getError("policy") && (
                       <small className="text-red-500 text-xs mt-1">
-                        {getError("policyDescription")}
+                        {getError("policy")}
                       </small>
                     )}
                   </div>

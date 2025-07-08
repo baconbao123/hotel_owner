@@ -13,13 +13,13 @@ import HotelForm from "./HotelForm";
 import HotelDetail from "./HotelDetail";
 import { useSelector } from "react-redux";
 import { Link } from "react-router";
-import useCrud from "~/test/crudHook";
-import type { RootState } from "~/store";
-import Loading from "~/components/common/Loading";
-import { SkeletonTemplate } from "~/components/common/skeleton";
+import useCrud from "@/test/crudHook";
+import type { RootState } from "@/store";
+import Loading from "@/components/common/Loading";
+import { SkeletonTemplate } from "@/components/common/skeleton";
 import { Image } from "antd";
 import Cookies from "js-cookie";
-import $axios from "~/axios";
+import $axios from "@/axios";
 
 export default function RoleList() {
   const [selectedId, setSelectedId] = useState<string>();
