@@ -3,7 +3,7 @@ import { Upload, Image } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { Toast as PrimeToast } from "primereact/toast";
-import "antd/dist/reset.css";
+// import "antd/dist/reset.css";
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 type RcFile = import("antd/es/upload").RcFile;
