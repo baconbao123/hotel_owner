@@ -16,11 +16,11 @@ import { Sidebar } from "primereact/sidebar";
 import { toast } from "react-toastify";
 import { InputText } from "primereact/inputtext";
 import ImageUploader from "../../utils/ImageUploader";
-import type { RootState } from "@/store";
-import { disableLoading, setLoading } from "@/store/slice/commonSlice";
-import $axios from "@/axios";
-import { setUser, type UserLogin } from "@/store/slice/userDataSlice";
-import { setPermissions } from "@/store/slice/permissionSlice";
+import { disableLoading, setLoading } from "~/store/slice/commonSlice";
+import $axios from "~/axios";
+import { setUser, type UserLogin } from "~/store/slice/userDataSlice";
+import { setPermissions } from "~/store/slice/permissionSlice";
+import type { RootState } from "~/store";
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -223,7 +223,6 @@ export default function Navbar() {
                   : undefined
               }
               onFileChange={(file) => setSelectedFile(file)}
-              maxFileSize={100}
             />
           </div>
 

@@ -1,6 +1,6 @@
 import { Outlet } from "react-router";
-import Sidebar from "@/components/common/Sidebar";
-import Navbar from "@/components/common/Navbar";
+import Sidebar from "~/components/common/Sidebar";
+import Navbar from "~/components/common/Navbar";
 import "@/asset/styles/globals.scss";
 
 export default function RootLayout() {
