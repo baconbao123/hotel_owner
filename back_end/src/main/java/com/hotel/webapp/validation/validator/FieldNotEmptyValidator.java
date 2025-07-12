@@ -4,7 +4,7 @@ import com.hotel.webapp.validation.FieldNotEmpty;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class FieldNotEmptyValidator implements ConstraintValidator<FieldNotEmpty, String> {
+public class FieldNotEmptyValidator implements ConstraintValidator<FieldNotEmpty, Object> {
   private String fieldName;
 
   @Override
@@ -13,8 +13,8 @@ public class FieldNotEmptyValidator implements ConstraintValidator<FieldNotEmpty
   }
 
   @Override
-  public boolean isValid(String value, ConstraintValidatorContext context) {
-    if (value == null || value.trim().isEmpty()) {
+  public boolean isValid(Object value, ConstraintValidatorContext context) {
+    if (value == null || value.toString().trim().isEmpty()) {
       context.disableDefaultConstraintViolation();
       context.buildConstraintViolationWithTemplate(fieldName + "_NOT_EMPTY")
              .addConstraintViolation();

@@ -1,27 +1,29 @@
 // root.tsx
-import {
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-} from "react-router";
+import { Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 import { Provider } from "react-redux";
-import "./app.css"; 
+import "./app.css";
 import { store } from "./store";
-import { PrimeReactProvider } from 'primereact/api';
-import Loading from "~/components/common/Loading";
+import { PrimeReactProvider } from "primereact/api";
+import Loading from "@/components/common/Loading";
 import { useSelector } from "react-redux";
-import type { RootState } from './store';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import type { RootState } from "./store";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "primeicons/primeicons.css";
+import "~/asset/styles/main.scss"; 
 
 import "primereact/resources/themes/lara-light-cyan/theme.css";
+import 'react-toastify/dist/ReactToastify.css';
+import "primereact/resources/themes/lara-light-blue/theme.css";
+import "primereact/resources/primereact.min.css";
+import "primeicons/primeicons.css";
+
 
 function LayoutWithState() {
   const loading = useSelector((state: RootState) => state.commonSlince.loading);
   return (
     <>
-     <ToastContainer />
+      <ToastContainer />
       {loading && <Loading />}
       <Outlet />
     </>

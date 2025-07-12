@@ -17,42 +17,42 @@ export const navigation: MenuItem[] = [
     icon: HomeIcon,
     resourceName: "Dashboard",
   },
-  {
-    name: "Users Management",
-    href: "/user",
-    icon: UserIcon,
-    resourceName: "User",
-  },
-  {
-    name: "Role Management",
-    href: "/role",
-    icon: IdentificationIcon,
-    resourceName: "Role",
-  },
-  {
-    name: "Permission Management",
-    href: "/permission",
-    icon: ShieldCheckIcon,
-    resourceName: "Permissions",
-  },
-  {
-    name: "Street Management",
-    href: "/streets",
-    icon: MapIcon,
-    resourceName: "Street",
-  },
+  // {
+  //   name: "Users Management",
+  //   href: "/user",
+  //   icon: UserIcon,
+  //   resourceName: "User",
+  // },
+  // {
+  //   name: "Role Management",
+  //   href: "/role",
+  //   icon: IdentificationIcon,
+  //   resourceName: "Role",
+  // },
+  // {
+  //   name: "Permission Management",
+  //   href: "/permission",
+  //   icon: ShieldCheckIcon,
+  //   resourceName: "Permissions",
+  // },
+  // {
+  //   name: "Street Management",
+  //   href: "/streets",
+  //   icon: MapIcon,
+  //   resourceName: "Street",
+  // },
   {
     name: "Hotel Management",
     href: "/hotels",
     icon: BuildingOffice2Icon,
     resourceName: "Hotel",
   },
-  {
-    name: "Hotel Facilities",
-    href: "/facilities",
-    resourceName: "Facilities",
-    icon: TagIcon,
-  },
+  // {
+  //   name: "Hotel Facilities",
+  //   href: "/facilities",
+  //   resourceName: "Facilities",
+  //   icon: TagIcon,
+  // },
 ];
 
 export interface MenuItem {

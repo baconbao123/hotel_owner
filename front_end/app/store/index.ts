@@ -6,15 +6,17 @@ import {
   useSelector,
 } from "react-redux";
 
-import commonSlince from './slince/commonSlince'
-import userDataSlice from './slince/userDataSlice'
-import permissionSlice from './slince/permissionSlice'
+import commonSlince from "./slice/commonSlice";
+import userDataSlice from "./slice/userDataSlice";
+import permissionSlice from "./slice/permissionSlice";
+import commonDataSlice from "../test/commonDataSlice";
 
 export const store = configureStore({
   reducer: {
     commonSlince: commonSlince,
     userDataSlice: userDataSlice,
-    permissionSlice: permissionSlice
+    permissionSlice: permissionSlice,
+    commonDataSlice: commonDataSlice,
   },
 });
 

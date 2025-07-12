@@ -1,5 +1,7 @@
 server:
-  port: 9898
+  port: 9899
+  servlet:
+    context-path: /hotel-owner
 
 app:
   storage:
@@ -7,6 +9,8 @@ app:
     upload:
       user: upload/user
       hotel: upload/hotel
+      document: upload/document
+      icon: upload/icons
     download:
       user: user
 
@@ -19,6 +23,13 @@ spring:
     username: root
     password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      max-lifetime: 1800000
+      idle-timeout: 600000
+      connection-timeout: 30000
+      validation-timeout: 5000
+      keepalive-time: 60000
   jpa:
     hibernate:
       ddl-auto: update
@@ -36,3 +47,5 @@ springdoc:
 
 jwt:
   signerKey: "1miFxX59tPM31zfyscZTV1ovDPI+2RI6f7nxOPe0/9Cnblzms/A3CY9Jid7QyEa0"
+  valid-duration: 86400 # seconds -> 1 day
+  refreshable-duration: 604800 # seconds -> 7 days

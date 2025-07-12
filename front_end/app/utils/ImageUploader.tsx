@@ -4,7 +4,6 @@ import { PlusOutlined } from "@ant-design/icons";
 import type { GetProp, UploadFile, UploadProps } from "antd";
 import { Toast as PrimeToast } from "primereact/toast";
 // import "antd/dist/reset.css";
-import { toast } from "react-toastify";
 
 type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0];
 type RcFile = import("antd/es/upload").RcFile;
@@ -12,7 +11,6 @@ type RcFile = import("antd/es/upload").RcFile;
 interface ImageUploaderProp {
   initialImageUrl?: string;
   onFileChange: (file: RcFile | null) => void;
-  maxFileSize?: number;
   disabled?: boolean;
 }
 
@@ -27,15 +25,14 @@ const getBase64 = (file: FileType): Promise<string> =>
 const ImageUploader: React.FC<ImageUploaderProp> = ({
   initialImageUrl,
   onFileChange,
-  maxFileSize = 2,
   disabled = false,
 }) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const hasUploadedFile = useRef(false); // Track if a file has been uploaded
+  const toast = useRef<PrimeToast>(null);
+  const hasUploadedFile = useRef(false);
 
-  // Sync fileList with initialImageUrl only when no file has been uploaded
   useEffect(() => {
     console.log("ImageUploader: initialImageUrl =", initialImageUrl);
     if (initialImageUrl && !hasUploadedFile.current) {
@@ -98,15 +95,21 @@ const ImageUploader: React.FC<ImageUploaderProp> = ({
     console.log("beforeUpload: file =", file.name);
     const isImage = file.type.startsWith("image/");
     if (!isImage) {
-      toast.error("You can only upload image files", {
-        autoClose: 3000,
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "You can only upload image files!",
+        life: 3000,
       });
       return false;
     }
-    const isLtMaxSize = file.size / 1024 / 1024 < maxFileSize;
+    const isLtMaxSize = file.size / 1024 / 1024 < 100;
     if (!isLtMaxSize) {
-      toast.error(`Image must be smaller than ${maxFileSize}MB!`, {
-        autoClose: 3000,
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: `Image must be smaller than ${100}MB!`,
+        life: 3000,
       });
       return false;
     }
@@ -133,6 +136,7 @@ const ImageUploader: React.FC<ImageUploaderProp> = ({
 
   return (
     <>
+      <PrimeToast ref={toast} />
       <Upload
         listType="picture-card"
         fileList={fileList}

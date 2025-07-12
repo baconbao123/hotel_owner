@@ -1,12 +1,10 @@
 package com.hotel.webapp.entity;
 
 import com.hotel.webapp.base.AuditEntity;
-import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,24 +20,20 @@ public class User implements AuditEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   Integer id;
   String fullName;
+  @Column(nullable = false, unique = true)
   String email;
   String phoneNumber;
   @Lob
   String password;
-  @Nullable
   String avatarUrl;
-  @Nullable
-  Integer addressId;
-  @Nullable
+  Integer userType;
   @Lob
   String refreshToken;
-  Boolean isActive;
-  Timestamp createdAt;
-  @Nullable
-  Timestamp updatedAt;
+  LocalDateTime expired;
+  Boolean status;
+  LocalDateTime createdAt;
+  LocalDateTime updatedAt;
   Integer createdBy;
-  @Nullable
   Integer updatedBy;
-  @Nullable
   LocalDateTime deletedAt;
 }

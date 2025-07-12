@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = TrimValidator.class)
 public @interface Trim {
-  String message() default "Cannot Trim Value";
+  String message() default "";
   Class<?>[] groups() default {};
   Class<? extends Payload>[] payload() default {};
 

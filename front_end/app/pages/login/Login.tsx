@@ -8,14 +8,22 @@ import "primereact/resources/primereact.min.css";
 import $axios from "~/axios";
 import Cookies from "js-cookie";
 import { useAppDispatch } from "~/store";
-import { disableLoading, setLoading } from "~/store/slince/commonSlince";
+import { disableLoading, setLoading } from "~/store/slice/commonSlince";
 
 import { Password } from "primereact/password";
 import { toast } from "react-toastify";
+import type { Route } from "./+types/Login";
+import commonHook from "~/hook/commonHook";
 interface LoginForm {
     email: string;
     password: string;
     remember: boolean;
+}
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Login" },
+    { name: "description", content: "Hotel Admin Login" },
+  ];
 }
 
 const Login = () => {
@@ -27,9 +35,20 @@ const Login = () => {
     const [passwordError, setPasswordError] = useState<string>("");
     const [loginError, setLoginError] = useState<string>("");
     const [serverError, setServerError] = useState(false);
-
+    const {fetchUserInfo} = commonHook()
     const dispatch = useAppDispatch();
 
+    useEffect(() => {
+
+        checkUserInfo();
+    }, [])
+    
+    const checkUserInfo = async () => {
+        const result = await fetchUserInfo();
+        if (result) {
+            navigate('/dashboard');
+        }
+    };
     const handleSubmit = async (e: any): Promise<void> => {
         e.preventDefault();
         setEmailError("");

@@ -1,12 +1,10 @@
 package com.hotel.webapp.entity;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,12 +24,9 @@ public class Districts {
   String codeName;
   String provinceCode;
   Integer administrativeUnitId;
-  Timestamp createdAt;
-  @Nullable
-  Timestamp updatedAt;
+  LocalDateTime createdAt;
+  LocalDateTime updatedAt;
   Integer createdBy;
-  @Nullable
   Integer updatedBy;
-  @Nullable
   LocalDateTime deletedAt;
 }

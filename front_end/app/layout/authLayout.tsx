@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import "~/asset/styles/main.scss";
+import "@/asset/styles/main.scss";
 export default function AuthLayout() {
   return (
    
